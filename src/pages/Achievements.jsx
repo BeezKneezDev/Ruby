@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { API_URL } from '../config';
 import './Achievements.css';
 
 function Achievements() {
@@ -12,13 +13,13 @@ function Achievements() {
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/categories');
+      const response = await fetch('${API_URL}/api/categories');
       const data = await response.json();
 
       // Fetch achievement counts for each category
       const categoriesWithCounts = await Promise.all(
         data.map(async (cat) => {
-          const achResponse = await fetch(`http://localhost:3001/api/achievements?category_id=${cat.id}`);
+          const achResponse = await fetch(`${API_URL}/api/achievements?category_id=${cat.id}`);
           const achievements = await achResponse.json();
           return { ...cat, count: achievements.length };
         })
@@ -50,7 +51,7 @@ function Achievements() {
           >
             {category.featured_image && (
               <div className="category-image">
-                <img src={`http://localhost:3001/uploads/${category.featured_image}`} alt={category.name} />
+                <img src={`${API_URL}/uploads/${category.featured_image}`} alt={category.name} />
               </div>
             )}
             <div className="category-content">

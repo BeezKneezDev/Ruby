@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Navigate, Routes, Route, Link, useNavigate } from 'react-router-dom';
 import RichTextEditor from '../components/RichTextEditor';
+import { API_URL } from '../config';
 import './Dashboard.css';
 
 function Dashboard({ isAuthenticated }) {
@@ -72,7 +73,7 @@ function ManageAchievements() {
 
   const fetchAchievements = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/achievements');
+      const response = await fetch('${API_URL}/api/achievements');
       const data = await response.json();
       setAchievements(data);
     } catch (error) {
@@ -82,7 +83,7 @@ function ManageAchievements() {
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/categories');
+      const response = await fetch('${API_URL}/api/categories');
       const data = await response.json();
       setCategories(data);
     } catch (error) {
@@ -94,8 +95,8 @@ function ManageAchievements() {
     e.preventDefault();
 
     const url = editingId
-      ? `http://localhost:3001/api/admin/achievements/${editingId}`
-      : 'http://localhost:3001/api/admin/achievements';
+      ? `${API_URL}/api/admin/achievements/${editingId}`
+      : '${API_URL}/api/admin/achievements';
 
     const method = editingId ? 'PUT' : 'POST';
 
@@ -163,7 +164,7 @@ function ManageAchievements() {
     if (!confirm('Are you sure you want to delete this achievement?')) return;
 
     try {
-      const response = await fetch(`http://localhost:3001/api/admin/achievements/${id}`, {
+      const response = await fetch(`${API_URL}/api/admin/achievements/${id}`, {
         method: 'DELETE',
         credentials: 'include',
       });
@@ -266,7 +267,7 @@ function ManageAchievements() {
             <label>Featured Image</label>
             {currentFeatured && !featuredImage && (
               <div className="current-image">
-                <img src={`http://localhost:3001/uploads/${currentFeatured}`} alt="Current featured" style={{maxWidth: '200px', marginBottom: '10px'}} />
+                <img src={`${API_URL}/uploads/${currentFeatured}`} alt="Current featured" style={{maxWidth: '200px', marginBottom: '10px'}} />
                 <p style={{fontSize: '0.9rem', color: '#666'}}>Current featured image</p>
               </div>
             )}
@@ -283,7 +284,7 @@ function ManageAchievements() {
               <div className="current-gallery">
                 <div style={{display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '10px'}}>
                   {currentGallery.map((img, idx) => (
-                    <img key={idx} src={`http://localhost:3001/uploads/${img}`} alt={`Gallery ${idx}`} style={{maxWidth: '100px', height: '100px', objectFit: 'cover'}} />
+                    <img key={idx} src={`${API_URL}/uploads/${img}`} alt={`Gallery ${idx}`} style={{maxWidth: '100px', height: '100px', objectFit: 'cover'}} />
                   ))}
                 </div>
                 <p style={{fontSize: '0.9rem', color: '#666'}}>Current gallery images ({currentGallery.length})</p>
@@ -349,7 +350,7 @@ function ManageCategories() {
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/categories');
+      const response = await fetch('${API_URL}/api/categories');
       const data = await response.json();
       setCategories(data);
     } catch (error) {
@@ -373,8 +374,8 @@ function ManageCategories() {
     e.preventDefault();
 
     const url = editingId
-      ? `http://localhost:3001/api/admin/categories/${editingId}`
-      : 'http://localhost:3001/api/admin/categories';
+      ? `${API_URL}/api/admin/categories/${editingId}`
+      : '${API_URL}/api/admin/categories';
 
     const method = editingId ? 'PUT' : 'POST';
 
@@ -428,7 +429,7 @@ function ManageCategories() {
     if (!confirm('Are you sure? This will delete all achievements in this category!')) return;
 
     try {
-      const response = await fetch(`http://localhost:3001/api/admin/categories/${id}`, {
+      const response = await fetch(`${API_URL}/api/admin/categories/${id}`, {
         method: 'DELETE',
         credentials: 'include',
       });
@@ -498,7 +499,7 @@ function ManageCategories() {
             <label>Featured Image</label>
             {currentFeatured && !featuredImage && (
               <div className="current-image">
-                <img src={`http://localhost:3001/uploads/${currentFeatured}`} alt="Current featured" style={{maxWidth: '200px', marginBottom: '10px'}} />
+                <img src={`${API_URL}/uploads/${currentFeatured}`} alt="Current featured" style={{maxWidth: '200px', marginBottom: '10px'}} />
                 <p style={{fontSize: '0.9rem', color: '#666'}}>Current featured image</p>
               </div>
             )}

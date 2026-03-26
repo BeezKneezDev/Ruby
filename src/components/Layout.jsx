@@ -1,4 +1,5 @@
 import { Outlet, Link, useNavigate } from 'react-router-dom';
+import { API_URL } from '../config';
 import './Layout.css';
 
 function Layout({ isAuthenticated, setIsAuthenticated }) {
@@ -6,7 +7,7 @@ function Layout({ isAuthenticated, setIsAuthenticated }) {
 
   const handleLogout = async () => {
     try {
-      await fetch('http://localhost:3001/api/logout', {
+      await fetch(`${API_URL}/api/logout`, {
         method: 'POST',
         credentials: 'include'
       });

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import { API_URL } from '../config';
 import './AchievementPage.css';
 
 function AchievementPage() {
@@ -14,7 +15,7 @@ function AchievementPage() {
 
   const fetchAchievement = async () => {
     try {
-      const response = await fetch(`http://localhost:3001/api/achievements/${id}`);
+      const response = await fetch(`${API_URL}/api/achievements/${id}`);
       const data = await response.json();
       setAchievement(data);
     } catch (error) {
@@ -62,7 +63,7 @@ function AchievementPage() {
       {achievement.featured_image && (
         <div className="achievement-featured-image">
           <img
-            src={`http://localhost:3001/uploads/${achievement.featured_image}`}
+            src={`${API_URL}/uploads/${achievement.featured_image}`}
             alt={achievement.title}
           />
         </div>
@@ -82,7 +83,7 @@ function AchievementPage() {
             {achievement.gallery_images.map((img, idx) => (
               <img
                 key={idx}
-                src={`http://localhost:3001/uploads/${img}`}
+                src={`${API_URL}/uploads/${img}`}
                 alt={`Gallery ${idx + 1}`}
               />
             ))}

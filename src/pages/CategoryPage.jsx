@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { API_URL } from '../config';
 import './CategoryPage.css';
 
 function CategoryPage() {
@@ -14,11 +15,11 @@ function CategoryPage() {
 
   const fetchCategoryAndAchievements = async () => {
     try {
-      const catResponse = await fetch(`http://localhost:3001/api/categories/${slug}`);
+      const catResponse = await fetch(`${API_URL}/api/categories/${slug}`);
       const catData = await catResponse.json();
       setCategory(catData);
 
-      const achResponse = await fetch(`http://localhost:3001/api/achievements?category_id=${catData.id}`);
+      const achResponse = await fetch(`${API_URL}/api/achievements?category_id=${catData.id}`);
       const achData = await achResponse.json();
       setAchievements(achData);
     } catch (error) {
@@ -40,7 +41,7 @@ function CategoryPage() {
     <div className="category-page">
       {category.featured_image && (
         <div className="category-hero">
-          <img src={`http://localhost:3001/uploads/${category.featured_image}`} alt={category.name} />
+          <img src={`${API_URL}/uploads/${category.featured_image}`} alt={category.name} />
           <div className="category-hero-overlay">
             <h1>{category.name}</h1>
           </div>
@@ -63,7 +64,7 @@ function CategoryPage() {
               className="achievement-card"
             >
               {achievement.featured_image && (
-                <img src={`http://localhost:3001/uploads/${achievement.featured_image}`} alt={achievement.title} className="achievement-image" />
+                <img src={`${API_URL}/uploads/${achievement.featured_image}`} alt={achievement.title} className="achievement-image" />
               )}
               <div className="achievement-content">
                 <h2>{achievement.title}</h2>

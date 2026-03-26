@@ -12,7 +12,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const app = express();
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -37,22 +37,33 @@ const upload = multer({
   }
 });
 
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+}
+
 // Middleware
 app.use(cors({
-  origin: 'http://localhost:5173',
+  origin: [
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'http://localhost:5175',
+    'https://beezkneezdev.github.io'
+  ],
   credentials: true
 }));
 app.use(bodyParser.json());
 app.use('/uploads', express.static(join(__dirname, '../public/uploads')));
 app.use(session({
-  secret: 'ruby-achievements-secret-key',
+  secret: process.env.SESSION_SECRET || 'ruby-achievements-secret-key',
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: false, // set to true in production with HTTPS
+    secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
     maxAge: 24 * 60 * 60 * 1000 // 24 hours
-  }
+  },
+  proxy: process.env.NODE_ENV === 'production'
 }));
 
 // Auth middleware

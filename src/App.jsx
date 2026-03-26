@@ -8,6 +8,7 @@ import CategoryPage from './pages/CategoryPage';
 import AchievementPage from './pages/AchievementPage';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import { API_URL } from './config';
 import './App.css';
 
 function App() {
@@ -20,7 +21,7 @@ function App() {
 
   const checkAuth = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/auth/check', {
+      const response = await fetch(`${API_URL}/api/auth/check`, {
         credentials: 'include'
       });
       const data = await response.json();
