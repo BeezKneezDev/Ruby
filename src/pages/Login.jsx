@@ -65,7 +65,6 @@ function Login({ setIsAuthenticated }) {
           </div>
           <button type="submit" className="login-button">Login</button>
         </form>
-        <p className="default-creds">Default: username=ruby, password=ruby123</p>
       </div>
     </div>
   );

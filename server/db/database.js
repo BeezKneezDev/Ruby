@@ -46,7 +46,7 @@ async function initializeDatabase() {
   if (existingUsers.length === 0) {
     const hashedPassword = bcrypt.hashSync('ruby123', 10);
     await pool.query('INSERT INTO users (username, password) VALUES ($1, $2)', ['ruby', hashedPassword]);
-    console.log('Default user created: username=ruby, password=ruby123');
+    console.log('Default user created');
   }
 
   // Seed default categories
