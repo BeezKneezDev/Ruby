@@ -136,12 +136,12 @@ app.get('/api/achievements', async (req, res) => {
   `;
 
   if (category_id) {
-    query += ' WHERE a.category_id = $1 ORDER BY a.date DESC';
+    query += ' WHERE a.category_id = $1 ORDER BY a.title ASC';
     const { rows } = await pool.query(query, [category_id]);
     return res.json(rows);
   }
 
-  const { rows } = await pool.query(query + ' ORDER BY a.date DESC');
+  const { rows } = await pool.query(query + ' ORDER BY a.title ASC');
   res.json(rows);
 });
 
