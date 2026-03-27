@@ -282,6 +282,14 @@ app.delete('/api/admin/achievements/:id', requireAuth, async (req, res) => {
   }
 });
 
+// Serve frontend in production
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(join(__dirname, '../dist')));
+  app.get('*', (req, res) => {
+    res.sendFile(join(__dirname, '../dist/index.html'));
+  });
+}
+
 // Initialize database then start server
 initializeDatabase().then(() => {
   app.listen(PORT, () => {

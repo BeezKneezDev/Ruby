@@ -8,7 +8,7 @@ services:
   - type: web
     name: ruby-achievements-api
     runtime: node
-    buildCommand: npm install
+    buildCommand: npm install && VITE_API_URL= npx vite build
     startCommand: node server/index.js
     envVars:
       - key: NODE_ENV
