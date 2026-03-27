@@ -6,7 +6,7 @@ import bcrypt from 'bcryptjs';
 import multer from 'multer';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import db from './db/database.js';
+import { pool, initializeDatabase } from './db/database.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -76,10 +76,11 @@ const requireAuth = (req, res, next) => {
 };
 
 // Auth routes
-app.post('/api/login', (req, res) => {
+app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
 
-  const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
+  const { rows } = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
+  const user = rows[0];
 
   if (!user || !bcrypt.compareSync(password, user.password)) {
     return res.status(401).json({ error: 'Invalid credentials' });
@@ -111,21 +112,21 @@ app.get('/api/auth/check', (req, res) => {
 });
 
 // Public routes - Categories
-app.get('/api/categories', (req, res) => {
-  const categories = db.prepare('SELECT * FROM categories ORDER BY name').all();
-  res.json(categories);
+app.get('/api/categories', async (req, res) => {
+  const { rows } = await pool.query('SELECT * FROM categories ORDER BY name');
+  res.json(rows);
 });
 
-app.get('/api/categories/:slug', (req, res) => {
-  const category = db.prepare('SELECT * FROM categories WHERE slug = ?').get(req.params.slug);
-  if (!category) {
+app.get('/api/categories/:slug', async (req, res) => {
+  const { rows } = await pool.query('SELECT * FROM categories WHERE slug = $1', [req.params.slug]);
+  if (rows.length === 0) {
     return res.status(404).json({ error: 'Category not found' });
   }
-  res.json(category);
+  res.json(rows[0]);
 });
 
 // Public routes - Achievements
-app.get('/api/achievements', (req, res) => {
+app.get('/api/achievements', async (req, res) => {
   const { category_id } = req.query;
 
   let query = `
@@ -135,65 +136,53 @@ app.get('/api/achievements', (req, res) => {
   `;
 
   if (category_id) {
-    query += ' WHERE a.category_id = ?';
-    const achievements = db.prepare(query + ' ORDER BY a.date DESC').all(category_id);
-    // Parse gallery_images JSON
-    achievements.forEach(a => {
-      if (a.gallery_images) a.gallery_images = JSON.parse(a.gallery_images);
-    });
-    return res.json(achievements);
+    query += ' WHERE a.category_id = $1 ORDER BY a.date DESC';
+    const { rows } = await pool.query(query, [category_id]);
+    return res.json(rows);
   }
 
-  const achievements = db.prepare(query + ' ORDER BY a.date DESC').all();
-  // Parse gallery_images JSON
-  achievements.forEach(a => {
-    if (a.gallery_images) a.gallery_images = JSON.parse(a.gallery_images);
-  });
-  res.json(achievements);
+  const { rows } = await pool.query(query + ' ORDER BY a.date DESC');
+  res.json(rows);
 });
 
-app.get('/api/achievements/:id', (req, res) => {
-  const achievement = db.prepare(`
+app.get('/api/achievements/:id', async (req, res) => {
+  const { rows } = await pool.query(`
     SELECT a.*, c.name as category_name, c.slug as category_slug
     FROM achievements a
     JOIN categories c ON a.category_id = c.id
-    WHERE a.id = ?
-  `).get(req.params.id);
+    WHERE a.id = $1
+  `, [req.params.id]);
 
-  if (!achievement) {
+  if (rows.length === 0) {
     return res.status(404).json({ error: 'Achievement not found' });
   }
 
-  // Parse gallery_images JSON
-  if (achievement.gallery_images) {
-    achievement.gallery_images = JSON.parse(achievement.gallery_images);
-  }
-
-  res.json(achievement);
+  res.json(rows[0]);
 });
 
 // Protected routes - Categories (admin only)
-app.post('/api/admin/categories', requireAuth, upload.single('featured_image'), (req, res) => {
+app.post('/api/admin/categories', requireAuth, upload.single('featured_image'), async (req, res) => {
   const { name, slug, description } = req.body;
 
   try {
     const featured_image = req.file?.filename || null;
-    const result = db.prepare('INSERT INTO categories (name, slug, description, featured_image) VALUES (?, ?, ?, ?)').run(name, slug, description, featured_image);
-    const category = db.prepare('SELECT * FROM categories WHERE id = ?').get(result.lastInsertRowid);
-    res.json(category);
+    const { rows } = await pool.query(
+      'INSERT INTO categories (name, slug, description, featured_image) VALUES ($1, $2, $3, $4) RETURNING *',
+      [name, slug, description, featured_image]
+    );
+    res.json(rows[0]);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 });
 
-app.put('/api/admin/categories/:id', requireAuth, upload.single('featured_image'), (req, res) => {
+app.put('/api/admin/categories/:id', requireAuth, upload.single('featured_image'), async (req, res) => {
   const { name, slug, description, keep_featured } = req.body;
 
   try {
-    // Get current category
-    const current = db.prepare('SELECT * FROM categories WHERE id = ?').get(req.params.id);
+    const { rows: currentRows } = await pool.query('SELECT * FROM categories WHERE id = $1', [req.params.id]);
+    const current = currentRows[0];
 
-    // Handle featured image
     let featured_image = current.featured_image;
     if (req.file) {
       featured_image = req.file.filename;
@@ -201,17 +190,19 @@ app.put('/api/admin/categories/:id', requireAuth, upload.single('featured_image'
       featured_image = null;
     }
 
-    db.prepare('UPDATE categories SET name = ?, slug = ?, description = ?, featured_image = ? WHERE id = ?').run(name, slug, description, featured_image, req.params.id);
-    const category = db.prepare('SELECT * FROM categories WHERE id = ?').get(req.params.id);
-    res.json(category);
+    const { rows } = await pool.query(
+      'UPDATE categories SET name = $1, slug = $2, description = $3, featured_image = $4 WHERE id = $5 RETURNING *',
+      [name, slug, description, featured_image, req.params.id]
+    );
+    res.json(rows[0]);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 });
 
-app.delete('/api/admin/categories/:id', requireAuth, (req, res) => {
+app.delete('/api/admin/categories/:id', requireAuth, async (req, res) => {
   try {
-    db.prepare('DELETE FROM categories WHERE id = ?').run(req.params.id);
+    await pool.query('DELETE FROM categories WHERE id = $1', [req.params.id]);
     res.json({ success: true });
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -222,7 +213,7 @@ app.delete('/api/admin/categories/:id', requireAuth, (req, res) => {
 app.post('/api/admin/achievements', requireAuth, upload.fields([
   { name: 'featured_image', maxCount: 1 },
   { name: 'gallery_images', maxCount: 10 }
-]), (req, res) => {
+]), async (req, res) => {
   const { title, description, content, category_id, date, status } = req.body;
 
   try {
@@ -231,20 +222,13 @@ app.post('/api/admin/achievements', requireAuth, upload.fields([
     const gallery_json = gallery_images.length > 0 ? JSON.stringify(gallery_images) : null;
     const achievementStatus = status || 'completed';
 
-    const result = db.prepare('INSERT INTO achievements (title, description, content, category_id, date, featured_image, gallery_images, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)').run(title, description, content, category_id, date, featured_image, gallery_json, achievementStatus);
-    const achievement = db.prepare(`
-      SELECT a.*, c.name as category_name, c.slug as category_slug
-      FROM achievements a
-      JOIN categories c ON a.category_id = c.id
-      WHERE a.id = ?
-    `).get(result.lastInsertRowid);
+    const { rows } = await pool.query(`
+      INSERT INTO achievements (title, description, content, category_id, date, featured_image, gallery_images, status)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      RETURNING *, (SELECT name FROM categories WHERE id = $4) as category_name, (SELECT slug FROM categories WHERE id = $4) as category_slug
+    `, [title, description, content, category_id, date, featured_image, gallery_json, achievementStatus]);
 
-    // Parse gallery_images JSON for response
-    if (achievement.gallery_images) {
-      achievement.gallery_images = JSON.parse(achievement.gallery_images);
-    }
-
-    res.json(achievement);
+    res.json(rows[0]);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
@@ -253,14 +237,13 @@ app.post('/api/admin/achievements', requireAuth, upload.fields([
 app.put('/api/admin/achievements/:id', requireAuth, upload.fields([
   { name: 'featured_image', maxCount: 1 },
   { name: 'gallery_images', maxCount: 10 }
-]), (req, res) => {
+]), async (req, res) => {
   const { title, description, content, category_id, date, status, keep_featured, keep_gallery } = req.body;
 
   try {
-    // Get current achievement
-    const current = db.prepare('SELECT * FROM achievements WHERE id = ?').get(req.params.id);
+    const { rows: currentRows } = await pool.query('SELECT * FROM achievements WHERE id = $1', [req.params.id]);
+    const current = currentRows[0];
 
-    // Handle featured image
     let featured_image = current.featured_image;
     if (req.files?.featured_image?.[0]) {
       featured_image = req.files.featured_image[0].filename;
@@ -268,8 +251,7 @@ app.put('/api/admin/achievements/:id', requireAuth, upload.fields([
       featured_image = null;
     }
 
-    // Handle gallery images
-    let gallery_images = current.gallery_images ? JSON.parse(current.gallery_images) : [];
+    let gallery_images = current.gallery_images || [];
     if (req.files?.gallery_images) {
       const newImages = req.files.gallery_images.map(f => f.filename);
       gallery_images = keep_gallery === 'true' ? [...gallery_images, ...newImages] : newImages;
@@ -279,35 +261,33 @@ app.put('/api/admin/achievements/:id', requireAuth, upload.fields([
     const gallery_json = gallery_images.length > 0 ? JSON.stringify(gallery_images) : null;
     const achievementStatus = status || current.status || 'completed';
 
-    db.prepare('UPDATE achievements SET title = ?, description = ?, content = ?, category_id = ?, date = ?, featured_image = ?, gallery_images = ?, status = ? WHERE id = ?').run(title, description, content, category_id, date, featured_image, gallery_json, achievementStatus, req.params.id);
+    const { rows } = await pool.query(`
+      UPDATE achievements SET title = $1, description = $2, content = $3, category_id = $4, date = $5, featured_image = $6, gallery_images = $7, status = $8
+      WHERE id = $9
+      RETURNING *, (SELECT name FROM categories WHERE id = $4) as category_name, (SELECT slug FROM categories WHERE id = $4) as category_slug
+    `, [title, description, content, category_id, date, featured_image, gallery_json, achievementStatus, req.params.id]);
 
-    const achievement = db.prepare(`
-      SELECT a.*, c.name as category_name, c.slug as category_slug
-      FROM achievements a
-      JOIN categories c ON a.category_id = c.id
-      WHERE a.id = ?
-    `).get(req.params.id);
-
-    // Parse gallery_images JSON for response
-    if (achievement.gallery_images) {
-      achievement.gallery_images = JSON.parse(achievement.gallery_images);
-    }
-
-    res.json(achievement);
+    res.json(rows[0]);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 });
 
-app.delete('/api/admin/achievements/:id', requireAuth, (req, res) => {
+app.delete('/api/admin/achievements/:id', requireAuth, async (req, res) => {
   try {
-    db.prepare('DELETE FROM achievements WHERE id = ?').run(req.params.id);
+    await pool.query('DELETE FROM achievements WHERE id = $1', [req.params.id]);
     res.json({ success: true });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+// Initialize database then start server
+initializeDatabase().then(() => {
+  app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+  });
+}).catch(err => {
+  console.error('Failed to initialize database:', err);
+  process.exit(1);
 });

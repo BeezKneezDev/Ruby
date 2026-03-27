@@ -73,7 +73,7 @@ function ManageAchievements() {
 
   const fetchAchievements = async () => {
     try {
-      const response = await fetch('${API_URL}/api/achievements');
+      const response = await fetch(`${API_URL}/api/achievements`);
       const data = await response.json();
       setAchievements(data);
     } catch (error) {
@@ -83,7 +83,7 @@ function ManageAchievements() {
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch('${API_URL}/api/categories');
+      const response = await fetch(`${API_URL}/api/categories`);
       const data = await response.json();
       setCategories(data);
     } catch (error) {
@@ -96,7 +96,7 @@ function ManageAchievements() {
 
     const url = editingId
       ? `${API_URL}/api/admin/achievements/${editingId}`
-      : '${API_URL}/api/admin/achievements';
+      : `${API_URL}/api/admin/achievements`;
 
     const method = editingId ? 'PUT' : 'POST';
 
@@ -350,7 +350,7 @@ function ManageCategories() {
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch('${API_URL}/api/categories');
+      const response = await fetch(`${API_URL}/api/categories`);
       const data = await response.json();
       setCategories(data);
     } catch (error) {
@@ -375,7 +375,7 @@ function ManageCategories() {
 
     const url = editingId
       ? `${API_URL}/api/admin/categories/${editingId}`
-      : '${API_URL}/api/admin/categories';
+      : `${API_URL}/api/admin/categories`;
 
     const method = editingId ? 'PUT' : 'POST';
 

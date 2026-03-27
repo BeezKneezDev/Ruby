@@ -6,19 +6,18 @@
   "scripts": {
     "dev": "vite",
     "server": "node server/index.js",
-    "migrate": "node server/db/migrate.js && node server/db/migrate-categories.js && node server/db/migrate-status.js",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",
-    "better-sqlite3": "^12.4.1",
     "body-parser": "^2.2.0",
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "express-session": "^1.18.2",
     "multer": "^2.0.2",
+    "pg": "^8.20.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-router-dom": "^7.9.4"

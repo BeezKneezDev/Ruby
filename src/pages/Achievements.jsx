@@ -13,7 +13,7 @@ function Achievements() {
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch('${API_URL}/api/categories');
+      const response = await fetch(`${API_URL}/api/categories`);
       const data = await response.json();
 
       // Fetch achievement counts for each category

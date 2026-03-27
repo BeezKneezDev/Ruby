@@ -1,3 +1,9 @@
+databases:
+  - name: ruby-achievements-db
+    plan: free
+    databaseName: ruby_achievements
+    user: ruby
+
 services:
   - type: web
     name: ruby-achievements-api
@@ -7,3 +13,7 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: ruby-achievements-db
+          property: connectionString

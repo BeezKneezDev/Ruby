@@ -12,8 +12,8 @@ dist
 dist-ssr
 *.local
 
-# Database
-server/db/*.db
+# SQLite (local legacy)
+*.db
 
 # Uploaded files
 public/uploads/*
