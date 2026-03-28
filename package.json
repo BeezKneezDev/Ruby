@@ -7,7 +7,7 @@
     "dev": "vite",
     "server": "node server/index.js",
     "build": "vite build",
-    "render-build": "npm install && VITE_API_URL= vite build",
+    "render-build": "npm install --include=dev && VITE_API_URL= npx vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
