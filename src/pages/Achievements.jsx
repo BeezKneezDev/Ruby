@@ -51,7 +51,7 @@ function Achievements() {
           >
             {category.featured_image && (
               <div className="category-image">
-                <img src={`${API_URL}/uploads/${category.featured_image}`} alt={category.name} />
+                <img src={`${category.featured_image}`} alt={category.name} />
               </div>
             )}
             <div className="category-content">

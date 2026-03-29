@@ -41,7 +41,7 @@ function CategoryPage() {
     <div className="category-page">
       {category.featured_image && (
         <div className="category-hero">
-          <img src={`${API_URL}/uploads/${category.featured_image}`} alt={category.name} />
+          <img src={`${category.featured_image}`} alt={category.name} />
           <div className="category-hero-overlay">
             <h1>{category.name}</h1>
           </div>
@@ -64,7 +64,7 @@ function CategoryPage() {
               className="achievement-card"
             >
               {achievement.featured_image && (
-                <img src={`${API_URL}/uploads/${achievement.featured_image}`} alt={achievement.title} className="achievement-image" />
+                <img src={`${achievement.featured_image}`} alt={achievement.title} className="achievement-image" />
               )}
               <div className="achievement-content">
                 <h2>{achievement.title}</h2>

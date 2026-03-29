@@ -267,7 +267,7 @@ function ManageAchievements() {
             <label>Featured Image</label>
             {currentFeatured && !featuredImage && (
               <div className="current-image">
-                <img src={`${API_URL}/uploads/${currentFeatured}`} alt="Current featured" style={{maxWidth: '200px', marginBottom: '10px'}} />
+                <img src={`${currentFeatured}`} alt="Current featured" style={{maxWidth: '200px', marginBottom: '10px'}} />
                 <p style={{fontSize: '0.9rem', color: '#666'}}>Current featured image</p>
               </div>
             )}
@@ -284,7 +284,7 @@ function ManageAchievements() {
               <div className="current-gallery">
                 <div style={{display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '10px'}}>
                   {currentGallery.map((img, idx) => (
-                    <img key={idx} src={`${API_URL}/uploads/${img}`} alt={`Gallery ${idx}`} style={{maxWidth: '100px', height: '100px', objectFit: 'cover'}} />
+                    <img key={idx} src={`${img}`} alt={`Gallery ${idx}`} style={{maxWidth: '100px', height: '100px', objectFit: 'cover'}} />
                   ))}
                 </div>
                 <p style={{fontSize: '0.9rem', color: '#666'}}>Current gallery images ({currentGallery.length})</p>
@@ -499,7 +499,7 @@ function ManageCategories() {
             <label>Featured Image</label>
             {currentFeatured && !featuredImage && (
               <div className="current-image">
-                <img src={`${API_URL}/uploads/${currentFeatured}`} alt="Current featured" style={{maxWidth: '200px', marginBottom: '10px'}} />
+                <img src={`${currentFeatured}`} alt="Current featured" style={{maxWidth: '200px', marginBottom: '10px'}} />
                 <p style={{fontSize: '0.9rem', color: '#666'}}>Current featured image</p>
               </div>
             )}

@@ -1,11 +1,14 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import session from 'express-session';
 import bcrypt from 'bcryptjs';
 import multer from 'multer';
+import { v2 as cloudinary } from 'cloudinary';
+import { CloudinaryStorage } from 'multer-storage-cloudinary';
+import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
 import { pool, initializeDatabase } from './db/database.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -14,27 +17,25 @@ const __dirname = dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, join(__dirname, '../public/uploads'));
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+// Configure multer with Cloudinary storage
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: 'ruby-achievements',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
   },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + '-' + file.originalname);
-  }
 });
 
 const upload = multer({
   storage,
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) {
-      cb(null, true);
-    } else {
-      cb(new Error('Only image files are allowed'));
-    }
-  }
 });
 
 if (process.env.NODE_ENV === 'production') {
@@ -52,7 +53,6 @@ app.use(cors({
   credentials: true
 }));
 app.use(bodyParser.json());
-app.use('/uploads', express.static(join(__dirname, '../public/uploads')));
 app.use(session({
   secret: process.env.SESSION_SECRET || 'ruby-achievements-secret-key',
   resave: false,
@@ -165,7 +165,7 @@ app.post('/api/admin/categories', requireAuth, upload.single('featured_image'), 
   const { name, slug, description } = req.body;
 
   try {
-    const featured_image = req.file?.filename || null;
+    const featured_image = req.file?.path || null;
     const { rows } = await pool.query(
       'INSERT INTO categories (name, slug, description, featured_image) VALUES ($1, $2, $3, $4) RETURNING *',
       [name, slug, description, featured_image]
@@ -185,7 +185,7 @@ app.put('/api/admin/categories/:id', requireAuth, upload.single('featured_image'
 
     let featured_image = current.featured_image;
     if (req.file) {
-      featured_image = req.file.filename;
+      featured_image = req.file.path;
     } else if (keep_featured === 'false') {
       featured_image = null;
     }
@@ -217,8 +217,8 @@ app.post('/api/admin/achievements', requireAuth, upload.fields([
   const { title, description, content, category_id, date, status } = req.body;
 
   try {
-    const featured_image = req.files?.featured_image?.[0]?.filename || null;
-    const gallery_images = req.files?.gallery_images?.map(f => f.filename) || [];
+    const featured_image = req.files?.featured_image?.[0]?.path || null;
+    const gallery_images = req.files?.gallery_images?.map(f => f.path) || [];
     const gallery_json = gallery_images.length > 0 ? JSON.stringify(gallery_images) : null;
     const achievementStatus = status || 'completed';
 
@@ -246,14 +246,14 @@ app.put('/api/admin/achievements/:id', requireAuth, upload.fields([
 
     let featured_image = current.featured_image;
     if (req.files?.featured_image?.[0]) {
-      featured_image = req.files.featured_image[0].filename;
+      featured_image = req.files.featured_image[0].path;
     } else if (keep_featured === 'false') {
       featured_image = null;
     }
 
     let gallery_images = current.gallery_images || [];
     if (req.files?.gallery_images) {
-      const newImages = req.files.gallery_images.map(f => f.filename);
+      const newImages = req.files.gallery_images.map(f => f.path);
       gallery_images = keep_gallery === 'true' ? [...gallery_images, ...newImages] : newImages;
     } else if (keep_gallery === 'false') {
       gallery_images = [];

@@ -63,7 +63,7 @@ function AchievementPage() {
       {achievement.featured_image && (
         <div className="achievement-featured-image">
           <img
-            src={`${API_URL}/uploads/${achievement.featured_image}`}
+            src={`${achievement.featured_image}`}
             alt={achievement.title}
           />
         </div>
@@ -83,7 +83,7 @@ function AchievementPage() {
             {achievement.gallery_images.map((img, idx) => (
               <img
                 key={idx}
-                src={`${API_URL}/uploads/${img}`}
+                src={`${img}`}
                 alt={`Gallery ${idx + 1}`}
               />
             ))}
