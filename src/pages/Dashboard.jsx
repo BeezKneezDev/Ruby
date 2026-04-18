@@ -16,6 +16,7 @@ function Dashboard({ isAuthenticated }) {
       </div>
       <div className="dashboard-content">
         <ManageHomePage />
+        <ManageMediaLibrary />
         <ManageAchievements />
       </div>
     </div>
@@ -164,6 +165,224 @@ function ManageHomePage() {
   );
 }
 
+function ManageMediaLibrary() {
+  const [media, setMedia] = useState([]);
+  const [uploading, setUploading] = useState(false);
+
+  useEffect(() => {
+    fetchMedia();
+  }, []);
+
+  const fetchMedia = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/admin/media`, { credentials: 'include' });
+      if (response.ok) {
+        const data = await response.json();
+        setMedia(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch media:', error);
+    }
+  };
+
+  const handleUpload = async (e) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      for (const file of files) {
+        formData.append('files', file);
+      }
+      const response = await fetch(`${API_URL}/api/admin/media`, {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      });
+      if (response.ok) {
+        fetchMedia();
+      } else {
+        alert('Failed to upload media');
+      }
+    } catch (error) {
+      console.error('Error uploading media:', error);
+      alert('Error uploading media');
+    } finally {
+      setUploading(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!confirm('Delete this media item?')) return;
+    try {
+      const response = await fetch(`${API_URL}/api/admin/media/${id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (response.ok) {
+        setMedia(prev => prev.filter(m => m.id !== id));
+      } else {
+        alert('Failed to delete media');
+      }
+    } catch (error) {
+      console.error('Error deleting media:', error);
+    }
+  };
+
+  return (
+    <div className="manage-section">
+      <div className="section-header">
+        <h2>Media Library</h2>
+      </div>
+
+      <div className="crud-form">
+        <div className="form-group">
+          <label>Upload Images or Videos</label>
+          <input
+            type="file"
+            accept="image/*,video/*"
+            multiple
+            onChange={handleUpload}
+            disabled={uploading}
+          />
+          {uploading && <p style={{fontSize: '0.9rem', color: '#667eea', marginTop: '5px'}}>Uploading...</p>}
+        </div>
+
+        {media.length > 0 && (
+          <div className="media-grid">
+            {media.map(item => (
+              <div key={item.id} className="media-grid-item">
+                <div className="image-thumb-wrapper">
+                  {item.resource_type === 'video' ? (
+                    <video src={item.url} style={{width: '100%', height: '120px', objectFit: 'cover'}} />
+                  ) : (
+                    <img src={item.url} alt={item.filename} style={{width: '100%', height: '120px', objectFit: 'cover'}} />
+                  )}
+                  <button
+                    type="button"
+                    className="btn-remove-image"
+                    onClick={() => handleDelete(item.id)}
+                    title="Delete media"
+                  >&times;</button>
+                </div>
+                <div className="media-grid-label">
+                  <span className={`media-type-badge media-type-${item.resource_type}`}>{item.resource_type}</span>
+                  {item.filename}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {media.length === 0 && !uploading && (
+          <p style={{color: '#666', textAlign: 'center', padding: '1rem 0'}}>No media uploaded yet.</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function MediaPickerModal({ isOpen, onClose, onSelect, mediaType, multiple }) {
+  const [media, setMedia] = useState([]);
+  const [selected, setSelected] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setSelected([]);
+      fetchMedia();
+    }
+  }, [isOpen, mediaType]);
+
+  const fetchMedia = async () => {
+    setLoading(true);
+    try {
+      const url = mediaType ? `${API_URL}/api/admin/media?type=${mediaType}` : `${API_URL}/api/admin/media`;
+      const response = await fetch(url, { credentials: 'include' });
+      if (response.ok) {
+        const data = await response.json();
+        setMedia(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch media:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleSelect = (item) => {
+    if (multiple) {
+      setSelected(prev => {
+        const exists = prev.find(s => s.id === item.id);
+        if (exists) return prev.filter(s => s.id !== item.id);
+        return [...prev, item];
+      });
+    } else {
+      setSelected([item]);
+    }
+  };
+
+  const handleConfirm = () => {
+    if (selected.length === 0) return;
+    if (multiple) {
+      onSelect(selected.map(s => s.url));
+    } else {
+      onSelect(selected[0].url);
+    }
+    onClose();
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="media-picker-overlay" onClick={onClose}>
+      <div className="media-picker-modal" onClick={e => e.stopPropagation()}>
+        <div className="media-picker-header">
+          <h3>Choose from Media Library</h3>
+          <button type="button" className="media-picker-close" onClick={onClose}>&times;</button>
+        </div>
+        <div className="media-picker-body">
+          {loading && <p style={{textAlign: 'center', padding: '2rem', color: '#666'}}>Loading...</p>}
+          {!loading && media.length === 0 && (
+            <p style={{textAlign: 'center', padding: '2rem', color: '#666'}}>
+              No {mediaType || 'media'} items found. Upload some in the Media Library section above.
+            </p>
+          )}
+          {!loading && media.length > 0 && (
+            <div className="media-picker-grid">
+              {media.map(item => {
+                const isSelected = selected.some(s => s.id === item.id);
+                return (
+                  <div
+                    key={item.id}
+                    className={`media-picker-item${isSelected ? ' media-picker-selected' : ''}`}
+                    onClick={() => toggleSelect(item)}
+                  >
+                    {item.resource_type === 'video' ? (
+                      <video src={item.url} style={{width: '100%', height: '100px', objectFit: 'cover'}} />
+                    ) : (
+                      <img src={item.url} alt={item.filename} style={{width: '100%', height: '100px', objectFit: 'cover'}} />
+                    )}
+                    {isSelected && <div className="media-picker-check">&#10003;</div>}
+                    <div className="media-grid-label">{item.filename}</div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+        <div className="media-picker-footer">
+          <button type="button" className="btn-secondary" onClick={onClose}>Cancel</button>
+          <button type="button" className="btn-primary" onClick={handleConfirm} disabled={selected.length === 0}>
+            {multiple ? `Add ${selected.length} item${selected.length !== 1 ? 's' : ''}` : 'Select'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ManageAchievements() {
   const [achievements, setAchievements] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -183,6 +402,12 @@ function ManageAchievements() {
   const [currentGallery, setCurrentGallery] = useState([]);
   const [removeFeatured, setRemoveFeatured] = useState(false);
   const [removedGalleryIndices, setRemovedGalleryIndices] = useState(new Set());
+  const [videoFile, setVideoFile] = useState(null);
+  const [currentVideo, setCurrentVideo] = useState(null);
+  const [removeVideo, setRemoveVideo] = useState(false);
+  const [featuredFromLibrary, setFeaturedFromLibrary] = useState(false);
+  const [videoFromLibrary, setVideoFromLibrary] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(null);
 
   useEffect(() => {
     fetchAchievements();
@@ -223,6 +448,8 @@ function ManageAchievements() {
 
       if (featuredImage) {
         formDataToSend.append('featured_image', featuredImage);
+      } else if (featuredFromLibrary && currentFeatured) {
+        formDataToSend.append('featured_image_url', currentFeatured);
       }
 
       if (galleryImages.length > 0) {
@@ -231,10 +458,22 @@ function ManageAchievements() {
         });
       }
 
-      if (removeFeatured && !featuredImage) {
+      if (videoFile) {
+        formDataToSend.append('video', videoFile);
+      } else if (videoFromLibrary && currentVideo) {
+        formDataToSend.append('video_url', currentVideo);
+      }
+
+      if (removeVideo && !videoFile && !videoFromLibrary) {
+        formDataToSend.append('keep_video', 'false');
+      } else {
+        formDataToSend.append('keep_video', (!videoFile && !videoFromLibrary && currentVideo) ? 'true' : 'false');
+      }
+
+      if (removeFeatured && !featuredImage && !featuredFromLibrary) {
         formDataToSend.append('keep_featured', 'false');
       } else {
-        formDataToSend.append('keep_featured', (!featuredImage && currentFeatured) ? 'true' : 'false');
+        formDataToSend.append('keep_featured', (!featuredImage && !featuredFromLibrary && currentFeatured) ? 'true' : 'false');
       }
 
       const filteredGallery = currentGallery.filter((_, idx) => !removedGalleryIndices.has(idx));
@@ -275,10 +514,15 @@ function ManageAchievements() {
     setChecklist(achievement.checklist || null);
     setCurrentFeatured(achievement.featured_image);
     setCurrentGallery(achievement.gallery_images || []);
+    setCurrentVideo(achievement.video || null);
     setFeaturedImage(null);
     setGalleryImages([]);
+    setVideoFile(null);
     setRemoveFeatured(false);
+    setRemoveVideo(false);
     setRemovedGalleryIndices(new Set());
+    setFeaturedFromLibrary(false);
+    setVideoFromLibrary(false);
     setEditingId(achievement.id);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -295,16 +539,39 @@ function ManageAchievements() {
     setChecklist(null);
     setFeaturedImage(null);
     setGalleryImages([]);
+    setVideoFile(null);
     setCurrentFeatured(null);
     setCurrentGallery([]);
+    setCurrentVideo(null);
     setRemoveFeatured(false);
+    setRemoveVideo(false);
     setRemovedGalleryIndices(new Set());
+    setFeaturedFromLibrary(false);
+    setVideoFromLibrary(false);
     setEditingId(null);
   };
 
   const getCategoryName = (catId) => {
     const cat = categories.find(c => c.id === catId);
     return cat ? cat.name : '';
+  };
+
+  const handleLibraryPickFeatured = (url) => {
+    setCurrentFeatured(url);
+    setFeaturedImage(null);
+    setFeaturedFromLibrary(true);
+    setRemoveFeatured(false);
+  };
+
+  const handleLibraryPickGallery = (urls) => {
+    setCurrentGallery(prev => [...prev, ...urls]);
+  };
+
+  const handleLibraryPickVideo = (url) => {
+    setCurrentVideo(url);
+    setVideoFile(null);
+    setVideoFromLibrary(true);
+    setRemoveVideo(false);
   };
 
   return (
@@ -380,6 +647,7 @@ function ManageAchievements() {
                     onClick={() => {
                       setCurrentFeatured(null);
                       setRemoveFeatured(true);
+                      setFeaturedFromLibrary(false);
                     }}
                     title="Remove featured image"
                   >&times;</button>
@@ -390,11 +658,19 @@ function ManageAchievements() {
             {removeFeatured && !featuredImage && (
               <p style={{fontSize: '0.9rem', color: '#c0392b', marginBottom: '10px'}}>Featured image will be removed on save</p>
             )}
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => setFeaturedImage(e.target.files[0])}
-            />
+            <div className="media-input-row">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  setFeaturedImage(e.target.files[0]);
+                  setFeaturedFromLibrary(false);
+                }}
+              />
+              <button type="button" className="btn-library" onClick={() => setPickerOpen('featured')}>
+                Choose from Library
+              </button>
+            </div>
             {featuredImage && <p style={{fontSize: '0.9rem', color: '#667eea', marginTop: '5px'}}>New image selected: {featuredImage.name}</p>}
           </div>
           <div className="form-group">
@@ -424,13 +700,57 @@ function ManageAchievements() {
                 </p>
               </div>
             )}
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={(e) => setGalleryImages(Array.from(e.target.files))}
-            />
+            <div className="media-input-row">
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={(e) => setGalleryImages(Array.from(e.target.files))}
+              />
+              <button type="button" className="btn-library" onClick={() => setPickerOpen('gallery')}>
+                Choose from Library
+              </button>
+            </div>
             {galleryImages.length > 0 && <p style={{fontSize: '0.9rem', color: '#667eea', marginTop: '5px'}}>{galleryImages.length} new image(s) selected</p>}
+          </div>
+          <div className="form-group">
+            <label>Video</label>
+            {currentVideo && !videoFile && !removeVideo && (
+              <div className="current-image">
+                <div className="image-thumb-wrapper">
+                  <video src={currentVideo} controls style={{maxWidth: '300px', maxHeight: '200px', marginBottom: '10px'}} />
+                  <button
+                    type="button"
+                    className="btn-remove-image"
+                    onClick={() => {
+                      setCurrentVideo(null);
+                      setRemoveVideo(true);
+                      setVideoFromLibrary(false);
+                    }}
+                    title="Remove video"
+                  >&times;</button>
+                </div>
+                <p style={{fontSize: '0.9rem', color: '#666'}}>Current video</p>
+              </div>
+            )}
+            {removeVideo && !videoFile && (
+              <p style={{fontSize: '0.9rem', color: '#c0392b', marginBottom: '10px'}}>Video will be removed on save</p>
+            )}
+            <div className="media-input-row">
+              <input
+                type="file"
+                accept="video/*"
+                onChange={(e) => {
+                  setVideoFile(e.target.files[0]);
+                  setRemoveVideo(false);
+                  setVideoFromLibrary(false);
+                }}
+              />
+              <button type="button" className="btn-library" onClick={() => setPickerOpen('video')}>
+                Choose from Library
+              </button>
+            </div>
+            {videoFile && <p style={{fontSize: '0.9rem', color: '#667eea', marginTop: '5px'}}>New video selected: {videoFile.name}</p>}
           </div>
           {checklist && (
             <div className="form-group">
@@ -464,6 +784,28 @@ function ManageAchievements() {
           </div>
         </form>
       )}
+
+      <MediaPickerModal
+        isOpen={pickerOpen === 'featured'}
+        onClose={() => setPickerOpen(null)}
+        onSelect={handleLibraryPickFeatured}
+        mediaType="image"
+        multiple={false}
+      />
+      <MediaPickerModal
+        isOpen={pickerOpen === 'gallery'}
+        onClose={() => setPickerOpen(null)}
+        onSelect={handleLibraryPickGallery}
+        mediaType="image"
+        multiple={true}
+      />
+      <MediaPickerModal
+        isOpen={pickerOpen === 'video'}
+        onClose={() => setPickerOpen(null)}
+        onSelect={handleLibraryPickVideo}
+        mediaType="video"
+        multiple={false}
+      />
 
       <div className="items-list">
         {achievements.length === 0 ? (

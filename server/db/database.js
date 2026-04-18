@@ -99,11 +99,25 @@ async function initializeDatabase() {
       key TEXT PRIMARY KEY,
       value TEXT
     );
+
+    CREATE TABLE IF NOT EXISTS media_library (
+      id SERIAL PRIMARY KEY,
+      url TEXT NOT NULL,
+      filename TEXT NOT NULL,
+      resource_type TEXT NOT NULL DEFAULT 'image',
+      cloudinary_public_id TEXT,
+      uploaded_at TIMESTAMPTZ DEFAULT NOW()
+    );
   `);
 
   // Add checklist column if missing (migration for existing DBs)
   await pool.query(`
     ALTER TABLE achievements ADD COLUMN IF NOT EXISTS checklist JSONB
+  `);
+
+  // Add video column if missing (migration for existing DBs)
+  await pool.query(`
+    ALTER TABLE achievements ADD COLUMN IF NOT EXISTS video TEXT
   `);
 
   // Seed default admin user
