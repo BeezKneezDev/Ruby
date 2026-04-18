@@ -94,6 +94,11 @@ async function initializeDatabase() {
       checklist JSONB,
       created_at TIMESTAMPTZ DEFAULT NOW()
     );
+
+    CREATE TABLE IF NOT EXISTS site_settings (
+      key TEXT PRIMARY KEY,
+      value TEXT
+    );
   `);
 
   // Add checklist column if missing (migration for existing DBs)
@@ -143,6 +148,22 @@ async function initializeDatabase() {
         console.log(`Seeded ${achievements.length} achievements for: ${cat.slug}`);
       }
     }
+  }
+
+  // Seed default site settings
+  const defaultSettings = {
+    hero_image: '/hero.jpg',
+    home_title: "Ruby's Achievement Portfolio",
+    home_subtitle: 'Celebrating success, one achievement at a time',
+    home_bio_1: "Hi, I'm Ruby! I love keeping busy with all kinds of activities. I'm passionate about dance, kapa haka, and playing sports with my friends. Whether it's performing on stage, competing in duathlons, or playing football, I always give it my best.",
+    home_bio_2: 'This portfolio tracks my progress towards earning my achievement bars at Lynmore School. Each bar has 9 challenges to complete across sports, arts, and citizenship.',
+  };
+
+  for (const [key, value] of Object.entries(defaultSettings)) {
+    await pool.query(
+      `INSERT INTO site_settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO NOTHING`,
+      [key, value]
+    );
   }
 
   console.log('Database initialized');

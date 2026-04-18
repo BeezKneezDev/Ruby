@@ -4,8 +4,9 @@
 
 /* Hero — full bleed */
 .hero {
-  background: linear-gradient(to top, rgba(26, 60, 42, 0.85), rgba(26, 60, 42, 0.4)),
-              url('/hero.jpg') center calc(50% + 50px)/cover no-repeat;
+  background-position: center calc(50% + 50px);
+  background-size: cover;
+  background-repeat: no-repeat;
   color: white;
   border-radius: 0;
   margin-top: -2rem;
@@ -42,45 +43,6 @@
   line-height: 1.8;
   color: #555;
   margin-bottom: 1.5rem;
-}
-
-/* Gallery section — full width */
-.gallery-section {
-  width: 100vw;
-  margin-left: calc(-50vw + 50%);
-  margin-bottom: 3rem;
-  padding: 0;
-}
-
-.gallery-section h2 {
-  font-size: 2rem;
-  color: #1a3c2a;
-  margin-bottom: 1.5rem;
-  text-align: center;
-}
-
-.home-gallery-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 4px;
-}
-
-.home-gallery-item {
-  overflow: hidden;
-  aspect-ratio: 1;
-}
-
-.home-gallery-item img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  transition: transform 0.4s ease, filter 0.4s ease;
-}
-
-.home-gallery-item:hover img {
-  transform: scale(1.08);
-  filter: brightness(1.1);
 }
 
 /* Completed achievements section */
@@ -179,11 +141,6 @@
 @media (max-width: 768px) {
   .about-section h1 {
     font-size: 2rem;
-  }
-
-  .home-gallery-grid {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 3px;
   }
 
   .achievements-grid {

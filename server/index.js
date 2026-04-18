@@ -216,6 +216,55 @@ app.put('/api/admin/achievements/:id', requireAuth, upload.fields([
   }
 });
 
+// Public route - Site settings
+app.get('/api/settings', async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT key, value FROM site_settings');
+    const settings = {};
+    for (const row of rows) {
+      settings[row.key] = row.value;
+    }
+    res.json(settings);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Protected route - Update site settings
+app.put('/api/admin/settings', requireAuth, upload.single('hero_image'), async (req, res) => {
+  try {
+    const fields = ['home_title', 'home_subtitle', 'home_bio_1', 'home_bio_2'];
+    for (const key of fields) {
+      if (req.body[key] !== undefined) {
+        await pool.query(
+          `INSERT INTO site_settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = $2`,
+          [key, req.body[key]]
+        );
+      }
+    }
+
+    if (req.file) {
+      await pool.query(
+        `INSERT INTO site_settings (key, value) VALUES ('hero_image', $1) ON CONFLICT (key) DO UPDATE SET value = $1`,
+        [req.file.path]
+      );
+    } else if (req.body.remove_hero === 'true') {
+      await pool.query(
+        `INSERT INTO site_settings (key, value) VALUES ('hero_image', '') ON CONFLICT (key) DO UPDATE SET value = ''`
+      );
+    }
+
+    const { rows } = await pool.query('SELECT key, value FROM site_settings');
+    const settings = {};
+    for (const row of rows) {
+      settings[row.key] = row.value;
+    }
+    res.json(settings);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
 // Serve frontend in production
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(join(__dirname, '../dist')));

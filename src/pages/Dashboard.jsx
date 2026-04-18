@@ -15,8 +15,151 @@ function Dashboard({ isAuthenticated }) {
         <h2>Dashboard</h2>
       </div>
       <div className="dashboard-content">
+        <ManageHomePage />
         <ManageAchievements />
       </div>
+    </div>
+  );
+}
+
+function ManageHomePage() {
+  const [settings, setSettings] = useState({
+    hero_image: '',
+    home_title: '',
+    home_subtitle: '',
+    home_bio_1: '',
+    home_bio_2: '',
+  });
+  const [heroFile, setHeroFile] = useState(null);
+  const [removeHero, setRemoveHero] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  const fetchSettings = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/settings`);
+      const data = await response.json();
+      setSettings(prev => ({ ...prev, ...data }));
+    } catch (error) {
+      console.error('Failed to fetch settings:', error);
+    }
+  };
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      const formData = new FormData();
+      formData.append('home_title', settings.home_title);
+      formData.append('home_subtitle', settings.home_subtitle);
+      formData.append('home_bio_1', settings.home_bio_1);
+      formData.append('home_bio_2', settings.home_bio_2);
+      if (heroFile) {
+        formData.append('hero_image', heroFile);
+      } else if (removeHero) {
+        formData.append('remove_hero', 'true');
+      }
+
+      const response = await fetch(`${API_URL}/api/admin/settings`, {
+        method: 'PUT',
+        credentials: 'include',
+        body: formData,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setSettings(prev => ({ ...prev, ...data }));
+        setHeroFile(null);
+        setRemoveHero(false);
+        alert('Home page content saved!');
+      } else {
+        alert('Failed to save settings');
+      }
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      alert('Error saving settings');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="manage-section">
+      <div className="section-header">
+        <h2>Home Page Content</h2>
+      </div>
+
+      <form onSubmit={handleSave} className="crud-form">
+        <div className="form-group">
+          <label>Hero Background Image</label>
+          {settings.hero_image && !removeHero && !heroFile && (
+            <div className="current-image">
+              <div className="image-thumb-wrapper">
+                <img src={settings.hero_image} alt="Hero background" style={{maxWidth: '300px', marginBottom: '10px'}} />
+                <button
+                  type="button"
+                  className="btn-remove-image"
+                  onClick={() => setRemoveHero(true)}
+                  title="Remove hero image"
+                >&times;</button>
+              </div>
+              <p style={{fontSize: '0.9rem', color: '#666'}}>Current hero image</p>
+            </div>
+          )}
+          {removeHero && !heroFile && (
+            <p style={{fontSize: '0.9rem', color: '#c0392b', marginBottom: '10px'}}>Hero image will be removed on save</p>
+          )}
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => {
+              setHeroFile(e.target.files[0]);
+              setRemoveHero(false);
+            }}
+          />
+          {heroFile && <p style={{fontSize: '0.9rem', color: '#667eea', marginTop: '5px'}}>New image selected: {heroFile.name}</p>}
+        </div>
+        <div className="form-group">
+          <label>Title</label>
+          <input
+            type="text"
+            value={settings.home_title}
+            onChange={(e) => setSettings({ ...settings, home_title: e.target.value })}
+          />
+        </div>
+        <div className="form-group">
+          <label>Subtitle</label>
+          <input
+            type="text"
+            value={settings.home_subtitle}
+            onChange={(e) => setSettings({ ...settings, home_subtitle: e.target.value })}
+          />
+        </div>
+        <div className="form-group">
+          <label>Bio Paragraph 1</label>
+          <textarea
+            value={settings.home_bio_1}
+            onChange={(e) => setSettings({ ...settings, home_bio_1: e.target.value })}
+            rows="4"
+          />
+        </div>
+        <div className="form-group">
+          <label>Bio Paragraph 2</label>
+          <textarea
+            value={settings.home_bio_2}
+            onChange={(e) => setSettings({ ...settings, home_bio_2: e.target.value })}
+            rows="4"
+          />
+        </div>
+        <div className="form-actions">
+          <button type="submit" className="btn-primary" disabled={saving}>
+            {saving ? 'Saving...' : 'Save Home Page'}
+          </button>
+        </div>
+      </form>
     </div>
   );
 }
@@ -213,7 +356,8 @@ function ManageAchievements() {
             <label>Description (Short summary)</label>
             <textarea
               value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              readOnly
+              className="read-only"
               rows="3"
             />
           </div>
