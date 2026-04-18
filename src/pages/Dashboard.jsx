@@ -38,6 +38,8 @@ function ManageAchievements() {
   const [checklist, setChecklist] = useState(null);
   const [currentFeatured, setCurrentFeatured] = useState(null);
   const [currentGallery, setCurrentGallery] = useState([]);
+  const [removeFeatured, setRemoveFeatured] = useState(false);
+  const [removedGalleryIndices, setRemovedGalleryIndices] = useState(new Set());
 
   useEffect(() => {
     fetchAchievements();
@@ -86,8 +88,15 @@ function ManageAchievements() {
         });
       }
 
-      formDataToSend.append('keep_featured', (!featuredImage && currentFeatured) ? 'true' : 'false');
-      formDataToSend.append('keep_gallery', (galleryImages.length === 0 && currentGallery.length > 0) ? 'true' : 'false');
+      if (removeFeatured && !featuredImage) {
+        formDataToSend.append('keep_featured', 'false');
+      } else {
+        formDataToSend.append('keep_featured', (!featuredImage && currentFeatured) ? 'true' : 'false');
+      }
+
+      const filteredGallery = currentGallery.filter((_, idx) => !removedGalleryIndices.has(idx));
+      formDataToSend.append('existing_gallery', JSON.stringify(filteredGallery));
+      formDataToSend.append('keep_gallery', (galleryImages.length === 0 && filteredGallery.length > 0) ? 'true' : 'false');
 
       if (checklist) {
         formDataToSend.append('checklist', JSON.stringify(checklist));
@@ -125,6 +134,8 @@ function ManageAchievements() {
     setCurrentGallery(achievement.gallery_images || []);
     setFeaturedImage(null);
     setGalleryImages([]);
+    setRemoveFeatured(false);
+    setRemovedGalleryIndices(new Set());
     setEditingId(achievement.id);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -143,6 +154,8 @@ function ManageAchievements() {
     setGalleryImages([]);
     setCurrentFeatured(null);
     setCurrentGallery([]);
+    setRemoveFeatured(false);
+    setRemovedGalleryIndices(new Set());
     setEditingId(null);
   };
 
@@ -213,11 +226,25 @@ function ManageAchievements() {
           </div>
           <div className="form-group">
             <label>Featured Image</label>
-            {currentFeatured && !featuredImage && (
+            {currentFeatured && !featuredImage && !removeFeatured && (
               <div className="current-image">
-                <img src={`${currentFeatured}`} alt="Current featured" style={{maxWidth: '200px', marginBottom: '10px'}} />
+                <div className="image-thumb-wrapper">
+                  <img src={`${currentFeatured}`} alt="Current featured" style={{maxWidth: '200px', marginBottom: '10px'}} />
+                  <button
+                    type="button"
+                    className="btn-remove-image"
+                    onClick={() => {
+                      setCurrentFeatured(null);
+                      setRemoveFeatured(true);
+                    }}
+                    title="Remove featured image"
+                  >&times;</button>
+                </div>
                 <p style={{fontSize: '0.9rem', color: '#666'}}>Current featured image</p>
               </div>
+            )}
+            {removeFeatured && !featuredImage && (
+              <p style={{fontSize: '0.9rem', color: '#c0392b', marginBottom: '10px'}}>Featured image will be removed on save</p>
             )}
             <input
               type="file"
@@ -228,14 +255,29 @@ function ManageAchievements() {
           </div>
           <div className="form-group">
             <label>Gallery Images (Select multiple)</label>
-            {currentGallery.length > 0 && galleryImages.length === 0 && (
+            {currentGallery.length > 0 && (
               <div className="current-gallery">
                 <div style={{display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '10px'}}>
                   {currentGallery.map((img, idx) => (
-                    <img key={idx} src={`${img}`} alt={`Gallery ${idx}`} style={{maxWidth: '100px', height: '100px', objectFit: 'cover'}} />
+                    !removedGalleryIndices.has(idx) && (
+                      <div key={idx} className="image-thumb-wrapper">
+                        <img src={`${img}`} alt={`Gallery ${idx}`} style={{maxWidth: '100px', height: '100px', objectFit: 'cover'}} />
+                        <button
+                          type="button"
+                          className="btn-remove-image"
+                          onClick={() => {
+                            setRemovedGalleryIndices(prev => new Set([...prev, idx]));
+                          }}
+                          title="Remove this image"
+                        >&times;</button>
+                      </div>
+                    )
                   ))}
                 </div>
-                <p style={{fontSize: '0.9rem', color: '#666'}}>Current gallery images ({currentGallery.length})</p>
+                <p style={{fontSize: '0.9rem', color: '#666'}}>
+                  Current gallery images ({currentGallery.length - removedGalleryIndices.size})
+                  {removedGalleryIndices.size > 0 && <span style={{color: '#c0392b'}}> — {removedGalleryIndices.size} marked for removal</span>}
+                </p>
               </div>
             )}
             <input

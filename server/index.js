@@ -177,7 +177,7 @@ app.put('/api/admin/achievements/:id', requireAuth, upload.fields([
   { name: 'featured_image', maxCount: 1 },
   { name: 'gallery_images', maxCount: 10 }
 ]), async (req, res) => {
-  const { title, description, content, category_id, date, status, keep_featured, keep_gallery, checklist } = req.body;
+  const { title, description, content, category_id, date, status, keep_featured, keep_gallery, existing_gallery, checklist } = req.body;
 
   try {
     const { rows: currentRows } = await pool.query('SELECT * FROM achievements WHERE id = $1', [req.params.id]);
@@ -191,10 +191,13 @@ app.put('/api/admin/achievements/:id', requireAuth, upload.fields([
     }
 
     let gallery_images = current.gallery_images || [];
+    if (existing_gallery) {
+      gallery_images = JSON.parse(existing_gallery);
+    }
     if (req.files?.gallery_images) {
       const newImages = req.files.gallery_images.map(f => f.path);
-      gallery_images = keep_gallery === 'true' ? [...gallery_images, ...newImages] : newImages;
-    } else if (keep_gallery === 'false') {
+      gallery_images = [...gallery_images, ...newImages];
+    } else if (!existing_gallery && keep_gallery === 'false') {
       gallery_images = [];
     }
     const gallery_json = gallery_images.length > 0 ? JSON.stringify(gallery_images) : null;
