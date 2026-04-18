@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { API_URL } from '../config';
 import './AchievementPage.css';
 
 function AchievementPage() {
   const { id } = useParams();
-  const navigate = useNavigate();
   const [achievement, setAchievement] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -35,61 +34,66 @@ function AchievementPage() {
 
   return (
     <div className="achievement-page">
-      <div className="achievement-header">
-        <Link
-          to={`/achievements/${achievement.category_slug}`}
-          className="back-link"
-        >
+      {achievement.featured_image && (
+        <div className="achievement-hero">
+          <img src={achievement.featured_image} alt={achievement.title} />
+        </div>
+      )}
+
+      <div className="achievement-body">
+        <Link to={`/${achievement.category_slug}`} className="back-link">
           &larr; Back to {achievement.category_name}
         </Link>
-        <div className="achievement-title-row">
-          <h1>{achievement.title}</h1>
-          {achievement.status && (
-            <span className={`status-badge status-${achievement.status}`}>
-              {achievement.status === 'completed' ? '✓ Completed' : '⏳ In Progress'}
+
+        <span className="achievement-category-label">{achievement.category_name}</span>
+        <h1>{achievement.title}</h1>
+
+        <div className="achievement-meta">
+          {achievement.date && (
+            <span className="achievement-date">
+              {new Date(achievement.date).toLocaleDateString()}
             </span>
           )}
-        </div>
-        {achievement.date && (
-          <span className="achievement-date">
-            {new Date(achievement.date).toLocaleDateString()}
+          <span className={`status-badge status-${achievement.status}`}>
+            {achievement.status === 'completed' ? 'Completed' : 'In Progress'}
           </span>
-        )}
+        </div>
+
         {achievement.description && (
           <p className="achievement-description">{achievement.description}</p>
         )}
-      </div>
 
-      {achievement.featured_image && (
-        <div className="achievement-featured-image">
-          <img
-            src={`${achievement.featured_image}`}
-            alt={achievement.title}
+        {achievement.content && (
+          <div
+            className="achievement-content"
+            dangerouslySetInnerHTML={{ __html: achievement.content }}
           />
-        </div>
-      )}
+        )}
 
-      {achievement.content && (
-        <div
-          className="achievement-content"
-          dangerouslySetInnerHTML={{ __html: achievement.content }}
-        />
-      )}
-
-      {achievement.gallery_images && achievement.gallery_images.length > 0 && (
-        <div className="achievement-gallery">
-          <h2>Gallery ({achievement.gallery_images.length} images)</h2>
-          <div className="gallery-grid">
-            {achievement.gallery_images.map((img, idx) => (
-              <img
-                key={idx}
-                src={`${img}`}
-                alt={`Gallery ${idx + 1}`}
-              />
-            ))}
+        {achievement.checklist && achievement.checklist.some(item => item.trim() !== '') && (
+          <div className="achievement-checklist">
+            <h2>Progress</h2>
+            <ol>
+              {achievement.checklist.map((item, idx) => (
+                <li key={idx} className={item.trim() ? 'checklist-done' : 'checklist-empty'}>
+                  {item.trim() || 'Not yet completed'}
+                </li>
+              ))}
+            </ol>
           </div>
-        </div>
-      )}
+        )}
+
+        {achievement.gallery_images && achievement.gallery_images.length > 0 && (
+          <div className="achievement-gallery">
+            <h2>Gallery</h2>
+            <div className="gallery-grid">
+              {achievement.gallery_images.map((img, idx) => (
+                <img key={idx} src={img} alt={`Gallery ${idx + 1}`} />
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

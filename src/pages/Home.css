@@ -1,55 +1,192 @@
 .home {
-  padding: 2rem 0;
+  padding: 0;
 }
 
+/* Hero — full bleed */
 .hero {
-  text-align: center;
-  padding: 4rem 2rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(to top, rgba(26, 60, 42, 0.85), rgba(26, 60, 42, 0.4)),
+              url('/hero.jpg') center calc(50% + 50px)/cover no-repeat;
   color: white;
-  border-radius: 8px;
+  border-radius: 0;
+  margin-top: -2rem;
   margin-bottom: 3rem;
+  margin-left: calc(-50vw + 50%);
+  width: 100vw;
+  position: relative;
+  overflow: hidden;
+  height: 65vh;
 }
 
-.hero h1 {
-  font-size: 3rem;
-  margin-bottom: 1rem;
-}
-
-.hero p {
-  font-size: 1.5rem;
-  margin-bottom: 2rem;
-}
-
-.cta-button {
-  display: inline-block;
-  background: white;
-  color: #667eea;
-  padding: 1rem 2rem;
-  border-radius: 4px;
-  text-decoration: none;
-  font-weight: bold;
-  transition: transform 0.2s;
-}
-
-.cta-button:hover {
-  transform: translateY(-2px);
-}
-
-.intro {
+/* About section */
+.about-section {
   max-width: 800px;
-  margin: 0 auto;
+  margin: 0 auto 3rem;
   text-align: center;
 }
 
-.intro h2 {
-  font-size: 2rem;
-  margin-bottom: 1rem;
-  color: #2c3e50;
+.about-section h1 {
+  font-size: 2.5rem;
+  color: #1a3c2a;
+  margin-bottom: 0.5rem;
 }
 
-.intro p {
+.about-subtitle {
+  font-size: 1.2rem;
+  color: #c9a84c !important;
+  font-weight: 600;
+  margin-bottom: 2rem !important;
+}
+
+.about-section p {
   font-size: 1.1rem;
-  line-height: 1.6;
+  line-height: 1.8;
   color: #555;
+  margin-bottom: 1.5rem;
+}
+
+/* Gallery section — full width */
+.gallery-section {
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
+  margin-bottom: 3rem;
+  padding: 0;
+}
+
+.gallery-section h2 {
+  font-size: 2rem;
+  color: #1a3c2a;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.home-gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+}
+
+.home-gallery-item {
+  overflow: hidden;
+  aspect-ratio: 1;
+}
+
+.home-gallery-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.4s ease, filter 0.4s ease;
+}
+
+.home-gallery-item:hover img {
+  transform: scale(1.08);
+  filter: brightness(1.1);
+}
+
+/* Completed achievements section */
+.completed-section {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.completed-section h2 {
+  font-size: 2rem;
+  color: #1a3c2a;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.achievements-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 2rem;
+}
+
+.achievement-card {
+  background: white;
+  border: 2px solid #e0ddd5;
+  border-radius: 12px;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.3s;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.achievement-card:hover {
+  border-color: #2d6b45;
+  transform: translateY(-4px);
+  box-shadow: 0 4px 16px rgba(26, 60, 42, 0.15);
+}
+
+.achievement-card-image {
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+  background: #f0ede6;
+}
+
+.achievement-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s;
+}
+
+.achievement-card:hover .achievement-card-image img {
+  transform: scale(1.05);
+}
+
+.achievement-card-content {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.achievement-card-category {
+  color: #2d6b45;
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.achievement-card-content h3 {
+  color: #1a3c2a;
+  margin-bottom: 0.5rem;
+  font-size: 1.2rem;
+}
+
+.achievement-card-content p {
+  color: #666;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.loading, .no-data {
+  text-align: center;
+  padding: 3rem;
+  color: #666;
+  font-size: 1.1rem;
+}
+
+@media (max-width: 768px) {
+  .about-section h1 {
+    font-size: 2rem;
+  }
+
+  .home-gallery-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 3px;
+  }
+
+  .achievements-grid {
+    grid-template-columns: 1fr;
+  }
 }

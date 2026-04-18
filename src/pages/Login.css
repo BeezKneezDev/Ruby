@@ -9,14 +9,15 @@
 .login-container {
   background: white;
   padding: 3rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(26, 60, 42, 0.1);
   width: 100%;
   max-width: 400px;
+  border-top: 4px solid #c9a84c;
 }
 
 .login-container h1 {
-  color: #2c3e50;
+  color: #1a3c2a;
   margin-bottom: 2rem;
   text-align: center;
 }
@@ -34,28 +35,29 @@
 }
 
 .form-group label {
-  color: #2c3e50;
+  color: #1a3c2a;
   font-weight: 500;
 }
 
 .form-group input {
   padding: 0.75rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  border: 1px solid #d5d0c4;
+  border-radius: 6px;
   font-size: 1rem;
 }
 
 .form-group input:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: #2d6b45;
+  box-shadow: 0 0 0 3px rgba(45, 107, 69, 0.1);
 }
 
 .login-button {
-  background: #667eea;
-  color: white;
+  background: #1a3c2a;
+  color: #c9a84c;
   border: none;
   padding: 1rem;
-  border-radius: 4px;
+  border-radius: 6px;
   font-size: 1rem;
   font-weight: bold;
   cursor: pointer;
@@ -63,14 +65,14 @@
 }
 
 .login-button:hover {
-  background: #5568d3;
+  background: #2d6b45;
 }
 
 .error-message {
   background: #fee;
   color: #c33;
   padding: 1rem;
-  border-radius: 4px;
+  border-radius: 6px;
   border: 1px solid #fcc;
 }
 

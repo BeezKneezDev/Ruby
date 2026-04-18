@@ -2,8 +2,6 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import Layout from './components/Layout';
 import Home from './pages/Home';
-import About from './pages/About';
-import Achievements from './pages/Achievements';
 import CategoryPage from './pages/CategoryPage';
 import AchievementPage from './pages/AchievementPage';
 import Login from './pages/Login';
@@ -42,12 +40,10 @@ function App() {
       <Routes>
         <Route path="/" element={<Layout isAuthenticated={isAuthenticated} setIsAuthenticated={setIsAuthenticated} />}>
           <Route index element={<Home />} />
-          <Route path="about" element={<About />} />
-          <Route path="achievements" element={<Achievements />} />
-          <Route path="achievements/:slug" element={<CategoryPage />} />
-          <Route path="achievement/:id" element={<AchievementPage />} />
+          <Route path=":slug" element={<CategoryPage />} />
+          <Route path=":slug/:id" element={<AchievementPage />} />
           <Route path="login" element={<Login setIsAuthenticated={setIsAuthenticated} />} />
-          <Route path="dashboard/*" element={<Dashboard isAuthenticated={isAuthenticated} />} />
+          <Route path="dashboard" element={<Dashboard isAuthenticated={isAuthenticated} />} />
         </Route>
       </Routes>
     </Router>

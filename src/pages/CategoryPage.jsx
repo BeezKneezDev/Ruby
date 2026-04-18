@@ -48,7 +48,7 @@ function CategoryPage() {
         </div>
       )}
       <div className="category-header">
-        <Link to="/achievements" className="back-link">&larr; Back to Categories</Link>
+        <Link to="/" className="back-link">&larr; Back to Categories</Link>
         {!category.featured_image && <h1>{category.name}</h1>}
         <p>{category.description}</p>
       </div>
@@ -60,7 +60,7 @@ function CategoryPage() {
           achievements.map(achievement => (
             <Link
               key={achievement.id}
-              to={`/achievement/${achievement.id}`}
+              to={`/${slug}/${achievement.id}`}
               className="achievement-card"
             >
               {achievement.featured_image && (

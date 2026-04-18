@@ -127,7 +127,8 @@ app.get('/api/categories/:slug', async (req, res) => {
 
 // Public routes - Achievements
 app.get('/api/achievements', async (req, res) => {
-  const { category_id } = req.query;
+  const { category_id, status } = req.query;
+  const showAll = status === 'all';
 
   let query = `
     SELECT a.*, c.name as category_name, c.slug as category_slug
@@ -135,13 +136,24 @@ app.get('/api/achievements', async (req, res) => {
     JOIN categories c ON a.category_id = c.id
   `;
 
-  if (category_id) {
-    query += ' WHERE a.category_id = $1 ORDER BY a.title ASC';
-    const { rows } = await pool.query(query, [category_id]);
-    return res.json(rows);
+  const conditions = [];
+  const params = [];
+
+  if (!showAll) {
+    conditions.push(`a.status = 'completed'`);
   }
 
-  const { rows } = await pool.query(query + ' ORDER BY a.title ASC');
+  if (category_id) {
+    params.push(category_id);
+    conditions.push(`a.category_id = $${params.length}`);
+  }
+
+  if (conditions.length > 0) {
+    query += ' WHERE ' + conditions.join(' AND ');
+  }
+
+  query += ' ORDER BY a.title ASC';
+  const { rows } = await pool.query(query, params);
   res.json(rows);
 });
 
@@ -150,7 +162,7 @@ app.get('/api/achievements/:id', async (req, res) => {
     SELECT a.*, c.name as category_name, c.slug as category_slug
     FROM achievements a
     JOIN categories c ON a.category_id = c.id
-    WHERE a.id = $1
+    WHERE a.id = $1 AND a.status = 'completed'
   `, [req.params.id]);
 
   if (rows.length === 0) {
@@ -160,85 +172,12 @@ app.get('/api/achievements/:id', async (req, res) => {
   res.json(rows[0]);
 });
 
-// Protected routes - Categories (admin only)
-app.post('/api/admin/categories', requireAuth, upload.single('featured_image'), async (req, res) => {
-  const { name, slug, description } = req.body;
-
-  try {
-    const featured_image = req.file?.path || null;
-    const { rows } = await pool.query(
-      'INSERT INTO categories (name, slug, description, featured_image) VALUES ($1, $2, $3, $4) RETURNING *',
-      [name, slug, description, featured_image]
-    );
-    res.json(rows[0]);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-});
-
-app.put('/api/admin/categories/:id', requireAuth, upload.single('featured_image'), async (req, res) => {
-  const { name, slug, description, keep_featured } = req.body;
-
-  try {
-    const { rows: currentRows } = await pool.query('SELECT * FROM categories WHERE id = $1', [req.params.id]);
-    const current = currentRows[0];
-
-    let featured_image = current.featured_image;
-    if (req.file) {
-      featured_image = req.file.path;
-    } else if (keep_featured === 'false') {
-      featured_image = null;
-    }
-
-    const { rows } = await pool.query(
-      'UPDATE categories SET name = $1, slug = $2, description = $3, featured_image = $4 WHERE id = $5 RETURNING *',
-      [name, slug, description, featured_image, req.params.id]
-    );
-    res.json(rows[0]);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-});
-
-app.delete('/api/admin/categories/:id', requireAuth, async (req, res) => {
-  try {
-    await pool.query('DELETE FROM categories WHERE id = $1', [req.params.id]);
-    res.json({ success: true });
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-});
-
-// Protected routes - Achievements (admin only)
-app.post('/api/admin/achievements', requireAuth, upload.fields([
-  { name: 'featured_image', maxCount: 1 },
-  { name: 'gallery_images', maxCount: 10 }
-]), async (req, res) => {
-  const { title, description, content, category_id, date, status } = req.body;
-
-  try {
-    const featured_image = req.files?.featured_image?.[0]?.path || null;
-    const gallery_images = req.files?.gallery_images?.map(f => f.path) || [];
-    const gallery_json = gallery_images.length > 0 ? JSON.stringify(gallery_images) : null;
-    const achievementStatus = status || 'completed';
-
-    const { rows } = await pool.query(`
-      INSERT INTO achievements (title, description, content, category_id, date, featured_image, gallery_images, status)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-      RETURNING *, (SELECT name FROM categories WHERE id = $4) as category_name, (SELECT slug FROM categories WHERE id = $4) as category_slug
-    `, [title, description, content, category_id, date, featured_image, gallery_json, achievementStatus]);
-
-    res.json(rows[0]);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-});
-
+// Protected routes - Achievements (admin only, edit only)
 app.put('/api/admin/achievements/:id', requireAuth, upload.fields([
   { name: 'featured_image', maxCount: 1 },
   { name: 'gallery_images', maxCount: 10 }
 ]), async (req, res) => {
-  const { title, description, content, category_id, date, status, keep_featured, keep_gallery } = req.body;
+  const { title, description, content, category_id, date, status, keep_featured, keep_gallery, checklist } = req.body;
 
   try {
     const { rows: currentRows } = await pool.query('SELECT * FROM achievements WHERE id = $1', [req.params.id]);
@@ -260,23 +199,15 @@ app.put('/api/admin/achievements/:id', requireAuth, upload.fields([
     }
     const gallery_json = gallery_images.length > 0 ? JSON.stringify(gallery_images) : null;
     const achievementStatus = status || current.status || 'completed';
+    const checklistJson = checklist ? checklist : current.checklist;
 
     const { rows } = await pool.query(`
-      UPDATE achievements SET title = $1, description = $2, content = $3, category_id = $4, date = $5, featured_image = $6, gallery_images = $7, status = $8
-      WHERE id = $9
+      UPDATE achievements SET title = $1, description = $2, content = $3, category_id = $4, date = $5, featured_image = $6, gallery_images = $7, status = $8, checklist = $9
+      WHERE id = $10
       RETURNING *, (SELECT name FROM categories WHERE id = $4) as category_name, (SELECT slug FROM categories WHERE id = $4) as category_slug
-    `, [title, description, content, category_id, date, featured_image, gallery_json, achievementStatus, req.params.id]);
+    `, [title, description, content, category_id, date, featured_image, gallery_json, achievementStatus, checklistJson, req.params.id]);
 
     res.json(rows[0]);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-});
-
-app.delete('/api/admin/achievements/:id', requireAuth, async (req, res) => {
-  try {
-    await pool.query('DELETE FROM achievements WHERE id = $1', [req.params.id]);
-    res.json({ success: true });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }

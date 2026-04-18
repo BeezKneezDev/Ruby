@@ -25,8 +25,6 @@ function Layout({ isAuthenticated, setIsAuthenticated }) {
           <Link to="/" className="nav-logo">Ruby's Achievements</Link>
           <div className="nav-links">
             <Link to="/">Home</Link>
-            <Link to="/about">About</Link>
-            <Link to="/achievements">Achievements</Link>
             {isAuthenticated ? (
               <>
                 <Link to="/dashboard">Dashboard</Link>

@@ -5,10 +5,10 @@
 }
 
 .navbar {
-  background: #2c3e50;
+  background: #1a3c2a;
   color: white;
   padding: 1rem 0;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
 
 .nav-content {
@@ -23,7 +23,7 @@
 .nav-logo {
   font-size: 1.5rem;
   font-weight: bold;
-  color: white;
+  color: #c9a84c;
   text-decoration: none;
 }
 
@@ -34,27 +34,28 @@
 }
 
 .nav-links a {
-  color: white;
+  color: #e8dcc8;
   text-decoration: none;
-  transition: opacity 0.2s;
+  transition: color 0.2s;
 }
 
 .nav-links a:hover {
-  opacity: 0.8;
+  color: #c9a84c;
 }
 
 .logout-btn {
   background: transparent;
-  border: 1px solid white;
-  color: white;
+  border: 1px solid #c9a84c;
+  color: #c9a84c;
   padding: 0.5rem 1rem;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.2s;
 }
 
 .logout-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: #c9a84c;
+  color: #1a3c2a;
 }
 
 .main-content {
@@ -66,8 +67,8 @@
 }
 
 .footer {
-  background: #34495e;
-  color: white;
+  background: #1a3c2a;
+  color: #e8dcc8;
   text-align: center;
   padding: 1rem;
   margin-top: auto;
