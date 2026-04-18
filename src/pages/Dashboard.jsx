@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Navigate } from 'react-router-dom';
 import RichTextEditor from '../components/RichTextEditor';
 import { API_URL } from '../config';
@@ -384,6 +384,7 @@ function MediaPickerModal({ isOpen, onClose, onSelect, mediaType, multiple }) {
 }
 
 function ManageAchievements() {
+  const editFormRef = useRef(null);
   const [achievements, setAchievements] = useState([]);
   const [categories, setCategories] = useState([]);
   const [editingId, setEditingId] = useState(null);
@@ -524,7 +525,9 @@ function ManageAchievements() {
     setFeaturedFromLibrary(false);
     setVideoFromLibrary(false);
     setEditingId(achievement.id);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setTimeout(() => {
+      editFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 0);
   };
 
   const resetForm = () => {
@@ -581,7 +584,7 @@ function ManageAchievements() {
       </div>
 
       {editingId && (
-        <form onSubmit={handleSubmit} className="crud-form">
+        <form ref={editFormRef} onSubmit={handleSubmit} className="crud-form">
           <div className="form-group">
             <label>Title</label>
             <input
