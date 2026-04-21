@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Navigate } from 'react-router-dom';
 import { API_URL } from '../config';
+import { normalizeSectionMedia } from '../utils';
 import './Dashboard.css';
 
 function Dashboard({ isAuthenticated }) {
@@ -325,7 +326,7 @@ function MediaPickerModal({ isOpen, onClose, onSelect, mediaType, multiple }) {
   const handleConfirm = () => {
     if (selected.length === 0) return;
     if (multiple) {
-      onSelect(selected.map(s => s.url));
+      onSelect(selected.map(s => ({ url: s.url, type: s.resource_type || 'image' })));
     } else {
       onSelect(selected[0].url, selected[0].resource_type);
     }
@@ -512,7 +513,7 @@ function ManageAchievements() {
       date: achievement.date || '',
       status: achievement.status || 'uncompleted'
     });
-    setContentSections(achievement.content_sections || []);
+    setContentSections((achievement.content_sections || []).map(normalizeSectionMedia));
     setChecklist(achievement.checklist || null);
     setCurrentFeatured(achievement.featured_image);
     setCurrentGallery(achievement.gallery_images || []);
@@ -567,13 +568,14 @@ function ManageAchievements() {
     setRemoveFeatured(false);
   };
 
-  const handleLibraryPickGallery = (urls) => {
-    setCurrentGallery(prev => [...prev, ...urls]);
+  const handleLibraryPickGallery = (items) => {
+    setCurrentGallery(prev => [...prev, ...items.map(i => typeof i === 'string' ? i : i.url)]);
   };
 
-  const handleLibraryPickSection = (url, resourceType, sectionIdx) => {
+  const handleLibraryPickSection = (items, sectionIdx) => {
     const updated = [...contentSections];
-    updated[sectionIdx] = { ...updated[sectionIdx], media_url: url, media_type: resourceType || 'image' };
+    const existing = updated[sectionIdx].media || [];
+    updated[sectionIdx] = { ...updated[sectionIdx], media: [...existing, ...items] };
     setContentSections(updated);
   };
 
@@ -653,26 +655,28 @@ function ManageAchievements() {
                   </div>
                   <div className="content-section-fields">
                     <div className="form-group">
-                      <label>Image or Video</label>
-                      {section.media_url && (
-                        <div className="current-image">
-                          <div className="image-thumb-wrapper">
-                            {section.media_type === 'video' ? (
-                              <video src={section.media_url} controls style={{maxWidth: '200px', maxHeight: '140px', marginBottom: '10px'}} />
-                            ) : (
-                              <img src={section.media_url} alt="Section media" style={{maxWidth: '200px', marginBottom: '10px'}} />
-                            )}
-                            <button
-                              type="button"
-                              className="btn-remove-image"
-                              onClick={() => {
-                                const updated = [...contentSections];
-                                updated[idx] = { ...updated[idx], media_url: '', media_type: '' };
-                                setContentSections(updated);
-                              }}
-                              title="Remove media"
-                            >&times;</button>
-                          </div>
+                      <label>Images / Videos</label>
+                      {section.media && section.media.length > 0 && (
+                        <div className="section-media-thumbs">
+                          {section.media.map((m, mIdx) => (
+                            <div key={mIdx} className="image-thumb-wrapper">
+                              {m.type === 'video' ? (
+                                <video src={m.url} style={{width: '100px', height: '80px', objectFit: 'cover'}} />
+                              ) : (
+                                <img src={m.url} alt="" style={{width: '100px', height: '80px', objectFit: 'cover'}} />
+                              )}
+                              <button
+                                type="button"
+                                className="btn-remove-image"
+                                onClick={() => {
+                                  const updated = [...contentSections];
+                                  updated[idx] = { ...updated[idx], media: updated[idx].media.filter((_, i) => i !== mIdx) };
+                                  setContentSections(updated);
+                                }}
+                                title="Remove media"
+                              >&times;</button>
+                            </div>
+                          ))}
                         </div>
                       )}
                       <button type="button" className="btn-library" onClick={() => setPickerOpen(`section-${idx}`)}>
@@ -711,7 +715,7 @@ function ManageAchievements() {
               <button
                 type="button"
                 className="btn-add-section"
-                onClick={() => setContentSections(prev => [...prev, { media_url: '', media_type: '', title: '', content: '' }])}
+                onClick={() => setContentSections(prev => [...prev, { media: [], title: '', content: '' }])}
               >
                 + Add Section
               </button>
@@ -893,9 +897,9 @@ function ManageAchievements() {
           key={`section-picker-${idx}`}
           isOpen={pickerOpen === `section-${idx}`}
           onClose={() => setPickerOpen(null)}
-          onSelect={(url, resourceType) => handleLibraryPickSection(url, resourceType, idx)}
+          onSelect={(items) => handleLibraryPickSection(items, idx)}
           mediaType={null}
-          multiple={false}
+          multiple={true}
         />
       ))}
 

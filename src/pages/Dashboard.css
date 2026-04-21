@@ -578,3 +578,11 @@
   background: #2d6b45;
   color: white;
 }
+
+/* Section media thumbnail strip */
+.section-media-thumbs {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}

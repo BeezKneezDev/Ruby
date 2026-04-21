@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { API_URL } from '../config';
+import { normalizeSectionMedia } from '../utils';
+import MediaSlider from '../components/MediaSlider';
 import './AchievementPage.css';
 
 function AchievementPage() {
@@ -65,19 +67,9 @@ function AchievementPage() {
 
         {achievement.content_sections && achievement.content_sections.length > 0 && (
           <div className="achievement-sections">
-            {achievement.content_sections.map((section, idx) => (
+            {achievement.content_sections.map(normalizeSectionMedia).map((section, idx) => (
               <div key={idx} className="achievement-section">
-                {section.media_url && (
-                  <div className="section-media">
-                    {section.media_type === 'video' ? (
-                      <video controls preload="metadata">
-                        <source src={section.media_url} />
-                      </video>
-                    ) : (
-                      <img src={section.media_url} alt={section.title || `Section ${idx + 1}`} />
-                    )}
-                  </div>
-                )}
+                <MediaSlider media={section.media} />
                 {section.title && <h2 className="section-title">{section.title}</h2>}
                 {section.content && <p className="section-text">{section.content}</p>}
               </div>
