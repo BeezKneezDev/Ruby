@@ -63,11 +63,26 @@ function AchievementPage() {
           <p className="achievement-description">{achievement.description}</p>
         )}
 
-        {achievement.content && (
-          <div
-            className="achievement-content"
-            dangerouslySetInnerHTML={{ __html: achievement.content }}
-          />
+        {achievement.content_sections && achievement.content_sections.length > 0 && (
+          <div className="achievement-sections">
+            {achievement.content_sections.map((section, idx) => (
+              <div key={idx} className="achievement-section">
+                {section.media_url && (
+                  <div className="section-media">
+                    {section.media_type === 'video' ? (
+                      <video controls preload="metadata">
+                        <source src={section.media_url} />
+                      </video>
+                    ) : (
+                      <img src={section.media_url} alt={section.title || `Section ${idx + 1}`} />
+                    )}
+                  </div>
+                )}
+                {section.title && <h2 className="section-title">{section.title}</h2>}
+                {section.content && <p className="section-text">{section.content}</p>}
+              </div>
+            ))}
+          </div>
         )}
 
         {achievement.checklist && achievement.checklist.some(item => item.trim() !== '') && (
@@ -80,6 +95,16 @@ function AchievementPage() {
                 </li>
               ))}
             </ol>
+          </div>
+        )}
+
+        {achievement.video && (
+          <div className="achievement-video">
+            <h2>Video</h2>
+            <video controls preload="metadata" style={{width: '100%', maxWidth: '800px'}}>
+              <source src={achievement.video} />
+              Your browser does not support the video tag.
+            </video>
           </div>
         )}
 

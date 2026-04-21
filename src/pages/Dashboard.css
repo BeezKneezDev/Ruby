@@ -501,3 +501,80 @@
   padding: 1rem 1.5rem;
   border-top: 1px solid #e0ddd5;
 }
+
+/* Content Sections Repeater */
+.content-sections-repeater {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.content-section-item {
+  background: white;
+  border: 1px solid #d5d0c4;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.content-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.6rem 1rem;
+  background: #e9e6de;
+  font-weight: 600;
+  color: #1a3c2a;
+  font-size: 0.9rem;
+}
+
+.btn-remove-section {
+  background: #c0392b;
+  color: white;
+  border: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: background 0.2s;
+}
+
+.btn-remove-section:hover {
+  background: #a93226;
+}
+
+.content-section-fields {
+  padding: 1rem;
+}
+
+.content-section-fields .form-group {
+  margin-bottom: 1rem;
+}
+
+.content-section-fields .form-group:last-child {
+  margin-bottom: 0;
+}
+
+.btn-add-section {
+  background: #2d6b45;
+  color: white;
+  border: 2px dashed #2d6b45;
+  padding: 0.75rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition: all 0.2s;
+  background: transparent;
+  color: #2d6b45;
+}
+
+.btn-add-section:hover {
+  background: #2d6b45;
+  color: white;
+}

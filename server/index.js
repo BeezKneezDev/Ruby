@@ -179,7 +179,7 @@ app.put('/api/admin/achievements/:id', requireAuth, upload.fields([
   { name: 'gallery_images', maxCount: 10 },
   { name: 'video', maxCount: 1 }
 ]), async (req, res) => {
-  const { title, description, content, category_id, date, status, keep_featured, keep_gallery, existing_gallery, checklist, keep_video } = req.body;
+  const { title, description, content, content_sections, category_id, date, status, keep_featured, keep_gallery, existing_gallery, checklist, keep_video } = req.body;
 
   try {
     const { rows: currentRows } = await pool.query('SELECT * FROM achievements WHERE id = $1', [req.params.id]);
@@ -216,12 +216,13 @@ app.put('/api/admin/achievements/:id', requireAuth, upload.fields([
     const gallery_json = gallery_images.length > 0 ? JSON.stringify(gallery_images) : null;
     const achievementStatus = status || current.status || 'completed';
     const checklistJson = checklist ? checklist : current.checklist;
+    const contentSectionsJson = content_sections ? content_sections : current.content_sections;
 
     const { rows } = await pool.query(`
-      UPDATE achievements SET title = $1, description = $2, content = $3, category_id = $4, date = $5, featured_image = $6, gallery_images = $7, status = $8, checklist = $9, video = $10
-      WHERE id = $11
+      UPDATE achievements SET title = $1, description = $2, content = $3, category_id = $4, date = $5, featured_image = $6, gallery_images = $7, status = $8, checklist = $9, video = $10, content_sections = $11
+      WHERE id = $12
       RETURNING *, (SELECT name FROM categories WHERE id = $4) as category_name, (SELECT slug FROM categories WHERE id = $4) as category_slug
-    `, [title, description, content, category_id, date, featured_image, gallery_json, achievementStatus, checklistJson, video, req.params.id]);
+    `, [title, description, content, category_id, date, featured_image, gallery_json, achievementStatus, checklistJson, video, contentSectionsJson, req.params.id]);
 
     res.json(rows[0]);
   } catch (error) {

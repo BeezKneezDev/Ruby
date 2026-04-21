@@ -98,60 +98,51 @@
   margin: 0 0 2rem;
 }
 
-/* Content block */
-.achievement-content {
+/* Content Sections */
+.achievement-sections {
   margin: 0 0 2rem;
-  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.achievement-section {
   background: #f0ede6;
   border-radius: 12px;
-  line-height: 1.8;
-  font-size: 1.05rem;
+  overflow: hidden;
 }
 
-.achievement-content h1 {
-  color: #1a3c2a;
-  font-size: 1.8rem;
-  margin: 2rem 0 1rem;
+.section-media {
+  width: 100%;
 }
 
-.achievement-content h1:first-child {
-  margin-top: 0;
+.section-media img {
+  width: 100%;
+  display: block;
+  max-height: 500px;
+  object-fit: cover;
 }
 
-.achievement-content h2 {
+.section-media video {
+  width: 100%;
+  display: block;
+  max-height: 500px;
+}
+
+.section-title {
   color: #1a3c2a;
   font-size: 1.4rem;
-  margin: 1.5rem 0 0.75rem;
+  margin: 0;
+  padding: 1.5rem 2rem 0;
 }
 
-.achievement-content h3 {
-  color: #1a3c2a;
-  font-size: 1.2rem;
-  margin: 1.5rem 0 0.75rem;
-}
-
-.achievement-content p {
-  margin: 0.75rem 0;
+.section-text {
   color: #333;
-}
-
-.achievement-content ul,
-.achievement-content ol {
-  margin: 0.75rem 0;
-  padding-left: 2rem;
-}
-
-.achievement-content li {
-  margin: 0.4rem 0;
-}
-
-.achievement-content a {
-  color: #2d6b45;
-  text-decoration: underline;
-}
-
-.achievement-content a:hover {
-  color: #1a3c2a;
+  line-height: 1.8;
+  font-size: 1.05rem;
+  margin: 0;
+  padding: 1rem 2rem 1.5rem;
+  white-space: pre-wrap;
 }
 
 /* Checklist */
@@ -249,8 +240,12 @@
     font-size: 1.8rem;
   }
 
-  .achievement-content {
-    padding: 1.5rem;
+  .section-title {
+    padding: 1rem 1.5rem 0;
+  }
+
+  .section-text {
+    padding: 0.75rem 1.5rem 1.25rem;
     font-size: 1rem;
   }
 

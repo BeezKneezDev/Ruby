@@ -120,6 +120,11 @@ async function initializeDatabase() {
     ALTER TABLE achievements ADD COLUMN IF NOT EXISTS video TEXT
   `);
 
+  // Add content_sections column if missing (migration for existing DBs)
+  await pool.query(`
+    ALTER TABLE achievements ADD COLUMN IF NOT EXISTS content_sections JSONB
+  `);
+
   // Seed default admin user
   const { rows: existingUsers } = await pool.query('SELECT id FROM users WHERE username = $1', ['ruby']);
   if (existingUsers.length === 0) {

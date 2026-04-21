@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 import { Navigate } from 'react-router-dom';
-import RichTextEditor from '../components/RichTextEditor';
 import { API_URL } from '../config';
 import './Dashboard.css';
 
@@ -328,7 +327,7 @@ function MediaPickerModal({ isOpen, onClose, onSelect, mediaType, multiple }) {
     if (multiple) {
       onSelect(selected.map(s => s.url));
     } else {
-      onSelect(selected[0].url);
+      onSelect(selected[0].url, selected[0].resource_type);
     }
     onClose();
   };
@@ -391,11 +390,11 @@ function ManageAchievements() {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    content: '',
     category_id: '',
     date: '',
     status: 'uncompleted'
   });
+  const [contentSections, setContentSections] = useState([]);
   const [featuredImage, setFeaturedImage] = useState(null);
   const [galleryImages, setGalleryImages] = useState([]);
   const [checklist, setChecklist] = useState(null);
@@ -442,7 +441,7 @@ function ManageAchievements() {
       const formDataToSend = new FormData();
       formDataToSend.append('title', formData.title);
       formDataToSend.append('description', formData.description);
-      formDataToSend.append('content', formData.content || '');
+      formDataToSend.append('content', '');
       formDataToSend.append('category_id', formData.category_id);
       formDataToSend.append('date', formData.date);
       formDataToSend.append('status', formData.status);
@@ -485,6 +484,8 @@ function ManageAchievements() {
         formDataToSend.append('checklist', JSON.stringify(checklist));
       }
 
+      formDataToSend.append('content_sections', JSON.stringify(contentSections));
+
       const response = await fetch(`${API_URL}/api/admin/achievements/${editingId}`, {
         method: 'PUT',
         credentials: 'include',
@@ -507,11 +508,11 @@ function ManageAchievements() {
     setFormData({
       title: achievement.title,
       description: achievement.description || '',
-      content: achievement.content || '',
       category_id: achievement.category_id,
       date: achievement.date || '',
       status: achievement.status || 'uncompleted'
     });
+    setContentSections(achievement.content_sections || []);
     setChecklist(achievement.checklist || null);
     setCurrentFeatured(achievement.featured_image);
     setCurrentGallery(achievement.gallery_images || []);
@@ -534,11 +535,11 @@ function ManageAchievements() {
     setFormData({
       title: '',
       description: '',
-      content: '',
       category_id: '',
       date: '',
       status: 'uncompleted'
     });
+    setContentSections([]);
     setChecklist(null);
     setFeaturedImage(null);
     setGalleryImages([]);
@@ -568,6 +569,12 @@ function ManageAchievements() {
 
   const handleLibraryPickGallery = (urls) => {
     setCurrentGallery(prev => [...prev, ...urls]);
+  };
+
+  const handleLibraryPickSection = (url, resourceType, sectionIdx) => {
+    const updated = [...contentSections];
+    updated[sectionIdx] = { ...updated[sectionIdx], media_url: url, media_type: resourceType || 'image' };
+    setContentSections(updated);
   };
 
   const handleLibraryPickVideo = (url) => {
@@ -632,11 +639,83 @@ function ManageAchievements() {
             />
           </div>
           <div className="form-group">
-            <label>Main Content</label>
-            <RichTextEditor
-              value={formData.content}
-              onChange={(val) => setFormData({ ...formData, content: val || '' })}
-            />
+            <label>Content Sections</label>
+            <div className="content-sections-repeater">
+              {contentSections.map((section, idx) => (
+                <div key={idx} className="content-section-item">
+                  <div className="content-section-header">
+                    <span>Section {idx + 1}</span>
+                    <button
+                      type="button"
+                      className="btn-remove-section"
+                      onClick={() => setContentSections(prev => prev.filter((_, i) => i !== idx))}
+                    >&times;</button>
+                  </div>
+                  <div className="content-section-fields">
+                    <div className="form-group">
+                      <label>Image or Video</label>
+                      {section.media_url && (
+                        <div className="current-image">
+                          <div className="image-thumb-wrapper">
+                            {section.media_type === 'video' ? (
+                              <video src={section.media_url} controls style={{maxWidth: '200px', maxHeight: '140px', marginBottom: '10px'}} />
+                            ) : (
+                              <img src={section.media_url} alt="Section media" style={{maxWidth: '200px', marginBottom: '10px'}} />
+                            )}
+                            <button
+                              type="button"
+                              className="btn-remove-image"
+                              onClick={() => {
+                                const updated = [...contentSections];
+                                updated[idx] = { ...updated[idx], media_url: '', media_type: '' };
+                                setContentSections(updated);
+                              }}
+                              title="Remove media"
+                            >&times;</button>
+                          </div>
+                        </div>
+                      )}
+                      <button type="button" className="btn-library" onClick={() => setPickerOpen(`section-${idx}`)}>
+                        Choose from Library
+                      </button>
+                    </div>
+                    <div className="form-group">
+                      <label>Title</label>
+                      <input
+                        type="text"
+                        value={section.title || ''}
+                        onChange={(e) => {
+                          const updated = [...contentSections];
+                          updated[idx] = { ...updated[idx], title: e.target.value };
+                          setContentSections(updated);
+                        }}
+                        placeholder="Section title"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Content</label>
+                      <textarea
+                        value={section.content || ''}
+                        onChange={(e) => {
+                          const updated = [...contentSections];
+                          updated[idx] = { ...updated[idx], content: e.target.value };
+                          setContentSections(updated);
+                        }}
+                        rows="4"
+                        placeholder="Section content..."
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+              <button
+                type="button"
+                className="btn-add-section"
+                onClick={() => setContentSections(prev => [...prev, { media_url: '', media_type: '', title: '', content: '' }])}
+              >
+                + Add Section
+              </button>
+            </div>
           </div>
           <div className="form-group">
             <label>Featured Image</label>
@@ -809,6 +888,16 @@ function ManageAchievements() {
         mediaType="video"
         multiple={false}
       />
+      {contentSections.map((_, idx) => (
+        <MediaPickerModal
+          key={`section-picker-${idx}`}
+          isOpen={pickerOpen === `section-${idx}`}
+          onClose={() => setPickerOpen(null)}
+          onSelect={(url, resourceType) => handleLibraryPickSection(url, resourceType, idx)}
+          mediaType={null}
+          multiple={false}
+        />
+      ))}
 
       <div className="items-list">
         {achievements.length === 0 ? (
